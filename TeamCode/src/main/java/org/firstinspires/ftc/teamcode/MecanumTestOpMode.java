@@ -81,6 +81,7 @@ public class MecanumTestOpMode extends LinearOpMode
         rr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         fl.setDirection(DcMotor.Direction.REVERSE);
+        rr.setDirection(DcMotor.Direction.REVERSE);
 
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
@@ -114,8 +115,8 @@ public class MecanumTestOpMode extends LinearOpMode
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
         leftStickY = gamepad1.left_stick_y;
-        leftStickX = gamepad1.left_stick_x * 1.1;
-        rightStickX = gamepad1.right_stick_x;
+        leftStickX = gamepad1.right_stick_x * 1.1;
+        rightStickX = gamepad1.left_stick_x;
 
         float pi = 3.1415926f;
 
