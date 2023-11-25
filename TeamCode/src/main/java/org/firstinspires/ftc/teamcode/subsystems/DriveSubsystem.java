@@ -76,21 +76,21 @@ public class DriveSubsystem extends SubsystemBase {
         TelemetryPacket packet = telemetryHandler.getCurrentPacket();
 
         Twist2dDual<Time> twist = localizer.update();
-        pose = getPose().plus(twist.value());
+        pose = pose.plus(twist.value());
 
-        poseHistory.add(getPose());
+        poseHistory.add(pose);
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
         }
 
         robotVel = twist.velocity().value();
 
-        packet.put("x pos", getPose().position.x);
-        packet.put("y pos", getPose().position.y);
-        packet.put("heading (deg)", Math.toDegrees(getPose().heading.log()));
+        packet.put("x pos", pose.position.x);
+        packet.put("y pos", pose.position.y);
+        packet.put("heading (deg)", Math.toDegrees(pose.heading.log()));
 
         // draw current robot pose
-        drawRobot(packet.fieldOverlay(), getPose());
+        drawRobot(packet.fieldOverlay(), pose);
 
         // draw pose history
         drawPoseHistory(packet.fieldOverlay());
