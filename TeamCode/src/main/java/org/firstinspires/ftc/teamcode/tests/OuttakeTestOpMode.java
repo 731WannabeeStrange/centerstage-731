@@ -1,20 +1,13 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.tests;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp
+@TeleOp(name = "Outtake Test", group = "test")
 @Config
-public class FullOuttakeTestOpMode extends LinearOpMode {
-
-    public static double slidePower = 0.3;
-    private DcMotorEx slide;
+public class OuttakeTestOpMode extends LinearOpMode {
 
     private enum ServoPosition {
         DOWN,
@@ -28,19 +21,19 @@ public class FullOuttakeTestOpMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
         outtake = hardwareMap.get(Servo.class, "outtake");
+
         outtake.setPosition(0);
-        slide = hardwareMap.get(DcMotorEx.class, "slide");
-        slide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData("Mode", "waiting for start");
         telemetry.update();
 
         waitForStart();
 
-        while (opModeIsActive() && !isStopRequested()) {
+        telemetry.addData("Mode", "running");
+        telemetry.update();
+
+        while (opModeIsActive()) {
             telemetry.addData("outtake position", outtake.getPosition());
             if (gamepad1.dpad_down) {
                 position = ServoPosition.DOWN;
@@ -61,17 +54,6 @@ public class FullOuttakeTestOpMode extends LinearOpMode {
                     outtake.setPosition(upPos);
                     break;
             }
-
-            if (gamepad1.b) {
-                slide.setPower(slidePower);
-            } else if (gamepad1.x) {
-                slide.setPower(-slidePower);
-            } else {
-                slide.setPower(0);
-            }
-
-            telemetry.addData("slide position", slide.getCurrentPosition());
-
             telemetry.update();
         }
     }
