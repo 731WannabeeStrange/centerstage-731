@@ -75,7 +75,7 @@ public class FollowTrajectoryCommand extends CommandBase {
 
         Pose2dDual<Time> txWorldTarget = trajectory.get(currentTime);
 
-        PoseVelocity2dDual<Time> command = holonomicController.compute(txWorldTarget, drive.pose, drive.robotVel);
+        PoseVelocity2dDual<Time> command = holonomicController.compute(txWorldTarget, drive.getPose(), drive.getRobotVel());
         MecanumKinematics.WheelVelocities<Time> wheelVels = Params.kinematics.inverse(command);
         double voltage = drive.getVoltage();
 
@@ -88,7 +88,7 @@ public class FollowTrajectoryCommand extends CommandBase {
         );
 
         // write error to telemetry
-        Pose2d error = txWorldTarget.value().minusExp(drive.pose);
+        Pose2d error = txWorldTarget.value().minusExp(drive.getPose());
         packet.put("x error", error.position.x);
         packet.put("y error", error.position.y);
         packet.put("heading error (deg)", Math.toDegrees(error.heading.log()));

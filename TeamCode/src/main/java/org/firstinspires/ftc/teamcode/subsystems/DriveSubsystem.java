@@ -25,15 +25,15 @@ import org.firstinspires.ftc.teamcode.utils.ThreeDeadWheelLocalizer;
 import java.util.LinkedList;
 
 public class DriveSubsystem extends SubsystemBase {
-    public final DcMotorEx leftFront, leftBack, rightBack, rightFront;
+    private final DcMotorEx leftFront, leftBack, rightBack, rightFront;
 
-    public final VoltageSensor voltageSensor;
+    private final VoltageSensor voltageSensor;
 
-    public final IMU imu;
+    private final IMU imu;
 
-    public final Localizer localizer;
-    public Pose2d pose;
-    public PoseVelocity2d robotVel;
+    private final Localizer localizer;
+    private Pose2d pose;
+    private PoseVelocity2d robotVel;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -76,21 +76,21 @@ public class DriveSubsystem extends SubsystemBase {
         TelemetryPacket packet = telemetryHandler.getCurrentPacket();
 
         Twist2dDual<Time> twist = localizer.update();
-        pose = pose.plus(twist.value());
+        pose = getPose().plus(twist.value());
 
-        poseHistory.add(pose);
+        poseHistory.add(getPose());
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
         }
 
         robotVel = twist.velocity().value();
 
-        packet.put("x pos", pose.position.x);
-        packet.put("y pos", pose.position.y);
-        packet.put("heading (deg)", Math.toDegrees(pose.heading.log()));
+        packet.put("x pos", getPose().position.x);
+        packet.put("y pos", getPose().position.y);
+        packet.put("heading (deg)", Math.toDegrees(getPose().heading.log()));
 
         // draw current robot pose
-        drawRobot(packet.fieldOverlay(), pose);
+        drawRobot(packet.fieldOverlay(), getPose());
 
         // draw pose history
         drawPoseHistory(packet.fieldOverlay());
@@ -136,5 +136,13 @@ public class DriveSubsystem extends SubsystemBase {
         c.setStrokeWidth(1);
         c.setStroke("#3F51B5");
         c.strokePolyline(xPoints, yPoints);
+    }
+
+    public Pose2d getPose() {
+        return pose;
+    }
+
+    public PoseVelocity2d getRobotVel() {
+        return robotVel;
     }
 }

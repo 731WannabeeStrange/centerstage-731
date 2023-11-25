@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
-@TeleOp
+@TeleOp(group = "test")
 public class CommandTeleOpTestOpMode extends LinearOpMode {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
 

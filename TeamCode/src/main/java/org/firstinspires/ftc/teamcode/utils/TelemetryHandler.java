@@ -29,7 +29,7 @@ public class TelemetryHandler {
 
     public void sendCurrentPacket() {
         dashboard.sendTelemetryPacket(packet);
-        packet = new TelemetryPacket();
+        reset();
     }
 
     public void reset() {

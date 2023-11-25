@@ -33,7 +33,7 @@ public class ManualDriveCommand extends CommandBase {
     public void execute() {
         TelemetryPacket packet = telemetryHandler.getCurrentPacket();
 
-        Vector2d input = VectorMath.rotate(new Vector2d(-g1ly.getAsDouble(), -g1lx.getAsDouble()), drive.pose.heading.inverse());
+        Vector2d input = VectorMath.rotate(new Vector2d(-g1ly.getAsDouble(), -g1lx.getAsDouble()), drive.getPose().heading.inverse());
         PoseVelocity2d powers = new PoseVelocity2d(new Vector2d(input.x, input.y), -g1rx.getAsDouble());
 
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(

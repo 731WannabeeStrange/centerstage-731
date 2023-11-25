@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.List;
 
-@Autonomous
+@Autonomous(group = "test")
 public class CommandAutoTestOpMode extends LinearOpMode {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
 
