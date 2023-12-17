@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.commands.FollowTrajectoriesCommand;
 import org.firstinspires.ftc.teamcode.commands.FollowTurnCommand;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.utils.BuilderUtils;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.List;
@@ -31,11 +30,11 @@ public class CommandAutoTestOpMode extends LinearOpMode {
         driveSubsystem = new DriveSubsystem(hardwareMap, startPose);
         scheduler.registerSubsystem(driveSubsystem);
 
-        List<Trajectory> trajectories = BuilderUtils.getTrajectoryBuilder(startPose)
+        List<Trajectory> trajectories = DriveSubsystem.getTrajectoryBuilder(startPose)
                 .splineToLinearHeading(new Pose2d(0, 0, Math.toDegrees(90)), 0)
                 .build();
-        TimeTurn turn1 = BuilderUtils.turnBuilder(Math.toRadians(90), BuilderUtils.getEndPose(trajectories));
-        TimeTurn turn2 = BuilderUtils.turnToBuilder(Math.toRadians(0), BuilderUtils.getEndPose(turn1));
+        TimeTurn turn1 = DriveSubsystem.turnBuilder(Math.toRadians(90), DriveSubsystem.getEndPose(trajectories));
+        TimeTurn turn2 = DriveSubsystem.turnToBuilder(Math.toRadians(0), DriveSubsystem.getEndPose(turn1));
 
         waitForStart();
 

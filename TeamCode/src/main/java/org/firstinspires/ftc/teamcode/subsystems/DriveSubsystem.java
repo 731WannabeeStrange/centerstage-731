@@ -5,6 +5,9 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Time;
+import com.acmerobotics.roadrunner.TimeTurn;
+import com.acmerobotics.roadrunner.Trajectory;
+import com.acmerobotics.roadrunner.TrajectoryBuilder;
 import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
@@ -23,6 +26,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.ThreeDeadWheelLocalizer;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class DriveSubsystem extends SubsystemBase {
     private final DcMotorEx leftFront, leftBack, rightBack, rightFront;
@@ -69,6 +73,34 @@ public class DriveSubsystem extends SubsystemBase {
         localizer = new ThreeDeadWheelLocalizer(hardwareMap, Params.inPerTick);
 
         register();
+    }
+
+    public static TrajectoryBuilder getTrajectoryBuilder(Pose2d beginPose) {
+        return new TrajectoryBuilder(
+                beginPose, 1e-6, 0.0,
+                Params.defaultVelConstraint, Params.defaultAccelConstraint,
+                0.25, 0.1
+        );
+    }
+
+    public static TimeTurn turnBuilder(double angle, Pose2d beginPose) {
+        return new TimeTurn(
+                beginPose, angle, Params.defaultTurnConstraints
+        );
+    }
+
+    public static TimeTurn turnToBuilder(double heading, Pose2d beginPose) {
+        return new TimeTurn(
+                beginPose, heading - beginPose.heading.log(), Params.defaultTurnConstraints
+        );
+    }
+
+    public static Pose2d getEndPose(List<Trajectory> trajectoryList) {
+        return trajectoryList.get(trajectoryList.size() - 1).path.end(1).value();
+    }
+
+    public static Pose2d getEndPose(TimeTurn turn) {
+        return new Pose2d(turn.beginPose.position, turn.beginPose.heading.plus(turn.angle));
     }
 
     @Override
