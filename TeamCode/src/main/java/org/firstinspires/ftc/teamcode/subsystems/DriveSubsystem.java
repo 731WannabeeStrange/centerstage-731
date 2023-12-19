@@ -16,7 +16,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -24,7 +23,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.teamcode.tuning.Params;
 import org.firstinspires.ftc.teamcode.utils.Localizer;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.TwoDeadWheelLocalizer;
 
 import java.util.LinkedList;
@@ -45,8 +43,8 @@ public class DriveSubsystem extends SubsystemBase {
 
     private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
 
-    public DriveSubsystem(HardwareMap hardwareMap, Pose2d pose) {
-        this.pose = pose;
+    public DriveSubsystem(HardwareMap hardwareMap, Pose2d startPose) {
+        this.pose = startPose;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
