@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode.commands;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.command.CommandBase;
@@ -12,19 +14,37 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+@Config
 public class ManualDriveCommand extends CommandBase {
 
     private final DriveSubsystem drive;
-    private final DoubleSupplier g1lx, g1ly, g1rx;
+    private final DoubleSupplier strafe, forward, rotation;
+    private final BooleanSupplier autoTurn0, autoTurn90, autoTurn180, autoTurn270;
     private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
 
-    public ManualDriveCommand(DriveSubsystem drive, DoubleSupplier g1lx, DoubleSupplier g1ly, DoubleSupplier g1rx) {
+    private enum TurnState {
+        DRIVER,
+        AUTO
+    }
+    private TurnState turnState = TurnState.DRIVER;
+    private double desiredAngle = 0;
+    public static double P = 0.01;
+
+    public ManualDriveCommand(DriveSubsystem drive, DoubleSupplier strafe, DoubleSupplier forward,
+                              DoubleSupplier rotation, BooleanSupplier autoTurn0,
+                              BooleanSupplier autoTurn90, BooleanSupplier autoTurn180,
+                              BooleanSupplier autoTurn270) {
         this.drive = drive;
-        this.g1lx = g1lx;
-        this.g1ly = g1ly;
-        this.g1rx = g1rx;
+        this.strafe = strafe;
+        this.forward = forward;
+        this.rotation = rotation;
+        this.autoTurn0 = autoTurn0;
+        this.autoTurn90 = autoTurn90;
+        this.autoTurn180 = autoTurn180;
+        this.autoTurn270 = autoTurn270;
         addRequirements(drive);
     }
 
@@ -32,10 +52,53 @@ public class ManualDriveCommand extends CommandBase {
     public void execute() {
         TelemetryPacket packet = telemetryHandler.getCurrentPacket();
 
-        Vector2d input = drive.getPose().heading.inverse().times(
-                new Vector2d(g1ly.getAsDouble(), -g1lx.getAsDouble())
+        Rotation2d currentHeading = drive.getPose().heading;
+        Vector2d input = currentHeading.inverse().times(
+                new Vector2d(forward.getAsDouble(), -strafe.getAsDouble())
         );
-        PoseVelocity2d powers = new PoseVelocity2d(input, -g1rx.getAsDouble());
+
+        PoseVelocity2d powers;
+        switch (turnState) {
+            case DRIVER:
+                powers = new PoseVelocity2d(input, -rotation.getAsDouble());
+                if (autoTurn0.getAsBoolean()) {
+                    desiredAngle = 0;
+                    turnState = TurnState.AUTO;
+                } else if (autoTurn180.getAsBoolean()) {
+                    desiredAngle = 180;
+                    turnState = TurnState.AUTO;
+                } else if (autoTurn90.getAsBoolean()) {
+                    desiredAngle = 90;
+                    turnState = TurnState.AUTO;
+                } else if (autoTurn270.getAsBoolean()) {
+                    desiredAngle = 270;
+                    turnState = TurnState.AUTO;
+                }
+                break;
+            case AUTO:
+                if (autoTurn0.getAsBoolean()) {
+                    desiredAngle = 0;
+                } else if (autoTurn180.getAsBoolean()) {
+                    desiredAngle = 180;
+                } else if (autoTurn90.getAsBoolean()) {
+                    desiredAngle = 90;
+                } else if (autoTurn270.getAsBoolean()) {
+                    desiredAngle = 270;
+                }
+                double error = desiredAngle - Math.toDegrees(currentHeading.toDouble());
+                if (error > 180) {
+                    error -= 360;
+                } else if (error < -180) {
+                    error += 360;
+                }
+                powers = new PoseVelocity2d(input, P * error);
+                if (rotation.getAsDouble() != 0) {
+                    turnState = TurnState.DRIVER;
+                }
+                break;
+            default:
+                throw new RuntimeException("weird turn state");
+        }
 
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));

@@ -18,26 +18,27 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 @TeleOp(group = "test")
 public class CommandTeleOpTestOpMode extends OpMode {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
-
+    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final Pose2d startPose = new Pose2d(0, 0, 0);
     private DriveSubsystem driveSubsystem;
     private IntakeSubsystem intakeSubsystem;
     private GamepadEx gamepad;
-
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
-
-    private final Pose2d startPose = new Pose2d(0, 0, 0);
 
     @Override
     public void init() {
         driveSubsystem = new DriveSubsystem(hardwareMap, startPose);
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
-        scheduler.registerSubsystem(driveSubsystem);
         gamepad = new GamepadEx(gamepad1);
 
         new Trigger(new TriggerReader(gamepad, GamepadKeys.Trigger.RIGHT_TRIGGER)::isDown)
                 .whenActive(new InstantCommand(intakeSubsystem::start, intakeSubsystem))
                 .whenInactive(new InstantCommand(intakeSubsystem::stop, intakeSubsystem));
-        driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX, gamepad::getLeftY, gamepad::getRightX));
+        driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
+                gamepad::getLeftY, gamepad::getRightX,
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_UP),
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_DOWN),
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_LEFT),
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT)));
         intakeSubsystem.setDefaultCommand(new InstantCommand(intakeSubsystem::stop, intakeSubsystem));
     }
 
