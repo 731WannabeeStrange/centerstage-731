@@ -21,9 +21,9 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.tuning.Params;
-import org.firstinspires.ftc.teamcode.utils.Localizer;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
+import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.LinkedList;
 import java.util.List;

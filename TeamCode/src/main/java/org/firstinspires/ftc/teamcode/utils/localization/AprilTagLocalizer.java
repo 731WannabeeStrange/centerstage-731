@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.utils;
+package org.firstinspires.ftc.teamcode.utils.localization;
 
 import com.acmerobotics.roadrunner.Pose2d;
 
@@ -29,6 +29,7 @@ public class AprilTagLocalizer implements AbsoluteLocalizer {
     }
 
     private final PoseEstimationStrategy poseEstimationStrategy;
+    private int numCurrentValidDetections = 0;
 
     public AprilTagLocalizer(PoseEstimationStrategy poseEstimationStrategy, AprilTagCamera... cameras) {
         // add appropriate AprilTag options
@@ -79,6 +80,7 @@ public class AprilTagLocalizer implements AbsoluteLocalizer {
     @Override
     public Optional<Pose2d> getPoseEstimate() {
         Optional<Pose2d> poseEstimate = Optional.empty();
+        numCurrentValidDetections = 0;
 
         switch (poseEstimationStrategy) {
             case CLOSEST_TO_REFERENCE_POSE:
@@ -92,6 +94,9 @@ public class AprilTagLocalizer implements AbsoluteLocalizer {
                     // could change the estimation strategy here
                     for (AprilTagDetection aprilTagDetection : aprilTagProcessor.getDetections()) {
                         if (aprilTagDetection.metadata != null) {
+                            // increment valid detection counter
+                            numCurrentValidDetections++;
+
                             // create a Pose3d with where the AprilTag is on the field
                             Pose3d targetPose = new Pose3d(
                                     new Vector3d(aprilTagDetection.metadata.fieldPosition),
@@ -128,6 +133,9 @@ public class AprilTagLocalizer implements AbsoluteLocalizer {
                     // could change the estimation strategy here
                     for (AprilTagDetection aprilTagDetection : aprilTagProcessor.getDetections()) {
                         if (aprilTagDetection.metadata != null) {
+                            // increment valid detection counter
+                            numCurrentValidDetections++;
+
                             // create a Pose3d with where the AprilTag is on the field
                             Pose3d targetPose = new Pose3d(
                                     new Vector3d(aprilTagDetection.metadata.fieldPosition),
@@ -162,5 +170,9 @@ public class AprilTagLocalizer implements AbsoluteLocalizer {
         }
 
         return poseEstimate;
+    }
+
+    public int getNumCurrentValidDetections() {
+        return numCurrentValidDetections;
     }
 }

@@ -30,9 +30,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.teamcode.utils.Localizer;
 import org.firstinspires.ftc.teamcode.utils.PoseMessage;
-import org.firstinspires.ftc.teamcode.utils.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
+import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -78,7 +78,7 @@ public final class TuningDrive {
 
         localizer = new ThreeDeadWheelLocalizer(hardwareMap, Params.inPerTick);
 
-        FlightRecorder.write("MECANUM_PARAMS", new Params());
+        // FlightRecorder.write("MECANUM_PARAMS", new Params());
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
