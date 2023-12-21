@@ -77,4 +77,10 @@ public class Vector3d {
     public double norm() {
         return v.magnitude();
     }
+
+    public double getDistance(Vector3d other) {
+        return Math.sqrt(
+                Math.pow(other.v.get(0) - v.get(0), 2) + Math.pow(other.v.get(1) - v.get(1), 2) + Math.pow(other.v.get(2) - v.get(2), 2)
+        );
+    }
 }

@@ -20,6 +20,10 @@ public class Rotation3d {
         this.q = q.normalized();
     }
 
+    public Rotation3d(MatrixF rotMatrix) {
+        q = Quaternion.fromMatrix(rotMatrix, System.nanoTime());
+    }
+
     public Rotation3d(double roll, double pitch, double yaw) {
         MatrixF rotMatrix = Orientation.getRotationMatrix(AxesReference.EXTRINSIC, AxesOrder.XYZ,
                 AngleUnit.RADIANS, (float) roll, (float) pitch, (float) yaw);
