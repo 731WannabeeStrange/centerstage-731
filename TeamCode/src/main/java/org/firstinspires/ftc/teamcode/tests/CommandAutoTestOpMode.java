@@ -21,14 +21,13 @@ public class CommandAutoTestOpMode extends LinearOpMode {
 
     private DriveSubsystem driveSubsystem;
 
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
 
     private final Pose2d startPose = new Pose2d(0, 0, 0);
 
     @Override
     public void runOpMode() throws InterruptedException {
-        driveSubsystem = new DriveSubsystem(hardwareMap, startPose);
-        scheduler.registerSubsystem(driveSubsystem);
+        driveSubsystem = new DriveSubsystem(hardwareMap, startPose, telemetryHandler);
 
         List<Trajectory> trajectories = DriveSubsystem.getTrajectoryBuilder(startPose)
                 .splineToLinearHeading(new Pose2d(0, 0, Math.toDegrees(90)), 0)
@@ -39,18 +38,17 @@ public class CommandAutoTestOpMode extends LinearOpMode {
         waitForStart();
 
         scheduler.schedule(
-                new FollowTrajectoriesCommand(driveSubsystem, trajectories),
-                new FollowTurnCommand(driveSubsystem, turn1),
+                new FollowTrajectoriesCommand(driveSubsystem, trajectories, telemetryHandler),
+                new FollowTurnCommand(driveSubsystem, turn1, telemetryHandler),
                 new WaitCommand(3000),
-                new FollowTurnCommand(driveSubsystem, turn2)
+                new FollowTurnCommand(driveSubsystem, turn2, telemetryHandler)
         );
 
         while (!isStopRequested() && opModeIsActive()) {
             scheduler.run();
-            telemetryHandler.sendCurrentPacket();
+            telemetryHandler.update();
         }
 
         scheduler.reset();
-        telemetryHandler.reset();
     }
 }

@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Time;
@@ -22,6 +21,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.tuning.Params;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
+import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
@@ -41,29 +41,25 @@ public class DriveSubsystem extends SubsystemBase {
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final TelemetryHandler telemetryHandler;
 
-    public DriveSubsystem(HardwareMap hardwareMap, Pose2d startPose) {
+    public DriveSubsystem(HardwareMap hardwareMap, Pose2d startPose, TelemetryHandler telemetryHandler) {
         this.pose = startPose;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-
-        leftFront = hardwareMap.get(DcMotorEx.class, "flMotor");
-        leftBack = hardwareMap.get(DcMotorEx.class, "rlMotor");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rrMotor");
-        rightFront = hardwareMap.get(DcMotorEx.class, "frMotor");
+        leftFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rrMotor"));
+        leftBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "frMotor"));
+        rightBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "flMotor"));
+        rightFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rlMotor"));
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightBack.setDirection(DcMotor.Direction.REVERSE);
-        leftBack.setDirection(DcMotor.Direction.REVERSE);
 
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -77,6 +73,7 @@ public class DriveSubsystem extends SubsystemBase {
         // two-wheel for now so we can have heading without tuned odo
         localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, Params.inPerTick);
 
+        this.telemetryHandler = telemetryHandler;
         register();
     }
 
@@ -110,8 +107,6 @@ public class DriveSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        TelemetryPacket packet = telemetryHandler.getCurrentPacket();
-
         Twist2dDual<Time> twist = localizer.update();
         pose = pose.plus(twist.value());
 
@@ -122,17 +117,15 @@ public class DriveSubsystem extends SubsystemBase {
 
         robotVel = twist.velocity().value();
 
-        packet.put("x pos", pose.position.x);
-        packet.put("y pos", pose.position.y);
-        packet.put("heading (deg)", Math.toDegrees(pose.heading.log()));
+        telemetryHandler.addData("x pos", pose.position.x);
+        telemetryHandler.addData("y pos", pose.position.y);
+        telemetryHandler.addData("heading (deg)", Math.toDegrees(pose.heading.log()));
 
         // draw current robot pose
-        drawRobot(packet.fieldOverlay(), pose);
+        drawRobot(telemetryHandler.fieldOverlay(), pose);
 
         // draw pose history
-        drawPoseHistory(packet.fieldOverlay());
-
-        telemetryHandler.updateCurrentPacket(packet);
+        drawPoseHistory(telemetryHandler.fieldOverlay());
     }
 
     public double getVoltage() {

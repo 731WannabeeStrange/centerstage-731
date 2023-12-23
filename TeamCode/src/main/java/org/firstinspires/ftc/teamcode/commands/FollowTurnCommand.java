@@ -28,18 +28,17 @@ public class FollowTurnCommand extends CommandBase {
     private final DriveSubsystem drive;
     private final TimeTurn turn;
 
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final TelemetryHandler telemetryHandler;
 
-    public FollowTurnCommand(DriveSubsystem drive, TimeTurn turn) {
+    public FollowTurnCommand(DriveSubsystem drive, TimeTurn turn, TelemetryHandler telemetryHandler) {
         this.drive = drive;
         this.turn = turn;
+        this.telemetryHandler = telemetryHandler;
         addRequirements(drive);
     }
 
     @Override
     public void execute() {
-        TelemetryPacket packet = telemetryHandler.getCurrentPacket();
-
         double currentTime;
         if (beginTime < 0) {
             beginTime = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime());
@@ -69,7 +68,7 @@ public class FollowTurnCommand extends CommandBase {
                 feedforward.compute(wheelVels.rightFront) / voltage
         );
 
-        Canvas c = packet.fieldOverlay();
+        Canvas c = telemetryHandler.fieldOverlay();
 
         // draw target pose
         c.setStroke("#4CAF50");
@@ -78,8 +77,6 @@ public class FollowTurnCommand extends CommandBase {
         // draw turn
         c.setStroke("#7C4DFFFF");
         c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
-
-        telemetryHandler.updateCurrentPacket(packet);
     }
 
     @Override

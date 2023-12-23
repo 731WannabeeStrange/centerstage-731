@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -23,7 +22,7 @@ public class ManualDriveCommand extends CommandBase {
     private final DriveSubsystem drive;
     private final DoubleSupplier strafe, forward, rotation;
     private final BooleanSupplier autoTurn0, autoTurn90, autoTurn180, autoTurn270;
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final TelemetryHandler telemetryHandler;
 
     private enum TurnState {
         DRIVER,
@@ -31,12 +30,12 @@ public class ManualDriveCommand extends CommandBase {
     }
     private TurnState turnState = TurnState.DRIVER;
     private double desiredAngle = 0;
-    public static double P = 0.01;
+    public static double P = 0.03;
 
     public ManualDriveCommand(DriveSubsystem drive, DoubleSupplier strafe, DoubleSupplier forward,
                               DoubleSupplier rotation, BooleanSupplier autoTurn0,
                               BooleanSupplier autoTurn90, BooleanSupplier autoTurn180,
-                              BooleanSupplier autoTurn270) {
+                              BooleanSupplier autoTurn270, TelemetryHandler telemetryHandler) {
         this.drive = drive;
         this.strafe = strafe;
         this.forward = forward;
@@ -45,22 +44,21 @@ public class ManualDriveCommand extends CommandBase {
         this.autoTurn90 = autoTurn90;
         this.autoTurn180 = autoTurn180;
         this.autoTurn270 = autoTurn270;
+        this.telemetryHandler = telemetryHandler;
         addRequirements(drive);
     }
 
     @Override
     public void execute() {
-        TelemetryPacket packet = telemetryHandler.getCurrentPacket();
-
         Rotation2d currentHeading = drive.getPose().heading;
-        Vector2d input = currentHeading.inverse().times(
-                new Vector2d(forward.getAsDouble(), -strafe.getAsDouble())
+        Vector2d input = currentHeading.times(
+                new Vector2d(-forward.getAsDouble(), -strafe.getAsDouble())
         );
 
         PoseVelocity2d powers;
         switch (turnState) {
             case DRIVER:
-                powers = new PoseVelocity2d(input, -rotation.getAsDouble());
+                powers = new PoseVelocity2d(input, rotation.getAsDouble());
                 if (autoTurn0.getAsBoolean()) {
                     desiredAngle = 0;
                     turnState = TurnState.AUTO;
@@ -68,10 +66,10 @@ public class ManualDriveCommand extends CommandBase {
                     desiredAngle = 180;
                     turnState = TurnState.AUTO;
                 } else if (autoTurn90.getAsBoolean()) {
-                    desiredAngle = 90;
+                    desiredAngle = -90;
                     turnState = TurnState.AUTO;
                 } else if (autoTurn270.getAsBoolean()) {
-                    desiredAngle = 270;
+                    desiredAngle = 90;
                     turnState = TurnState.AUTO;
                 }
                 break;
@@ -81,9 +79,9 @@ public class ManualDriveCommand extends CommandBase {
                 } else if (autoTurn180.getAsBoolean()) {
                     desiredAngle = 180;
                 } else if (autoTurn90.getAsBoolean()) {
-                    desiredAngle = 90;
+                    desiredAngle = -90;
                 } else if (autoTurn270.getAsBoolean()) {
-                    desiredAngle = 270;
+                    desiredAngle = 90;
                 }
                 double error = desiredAngle - Math.toDegrees(currentHeading.toDouble());
                 if (error > 180) {
@@ -91,7 +89,9 @@ public class ManualDriveCommand extends CommandBase {
                 } else if (error < -180) {
                     error += 360;
                 }
-                powers = new PoseVelocity2d(input, P * error);
+                telemetryHandler.addData("desired angle", desiredAngle);
+                telemetryHandler.addData("turn error", error);
+                powers = new PoseVelocity2d(input, P * -error);
                 if (rotation.getAsDouble() != 0) {
                     turnState = TurnState.DRIVER;
                 }
@@ -115,11 +115,9 @@ public class ManualDriveCommand extends CommandBase {
                 wheelVels.rightFront.get(0) / maxPowerMag
         );
 
-        packet.put("left front power", wheelVels.leftFront.get(0) / maxPowerMag);
-        packet.put("left back power", wheelVels.leftBack.get(0) / maxPowerMag);
-        packet.put("right back power", wheelVels.rightBack.get(0) / maxPowerMag);
-        packet.put("right front power", wheelVels.rightFront.get(0) / maxPowerMag);
-
-        telemetryHandler.updateCurrentPacket(packet);
+        telemetryHandler.addData("left front power", wheelVels.leftFront.get(0) / maxPowerMag);
+        telemetryHandler.addData("left back power", wheelVels.leftBack.get(0) / maxPowerMag);
+        telemetryHandler.addData("right back power", wheelVels.rightBack.get(0) / maxPowerMag);
+        telemetryHandler.addData("right front power", wheelVels.rightFront.get(0) / maxPowerMag);
     }
 }

@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.DisplacementTrajectory;
 import com.acmerobotics.roadrunner.HolonomicController;
 import com.acmerobotics.roadrunner.MecanumKinematics;
@@ -33,9 +32,9 @@ public class FollowPathCommand extends CommandBase {
     private final DriveSubsystem drive;
     private final DisplacementTrajectory trajectory;
 
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final TelemetryHandler telemetryHandler;
 
-    public FollowPathCommand(DriveSubsystem drive, Trajectory trajectory) {
+    public FollowPathCommand(DriveSubsystem drive, Trajectory trajectory, TelemetryHandler telemetryHandler) {
         this.drive = drive;
         this.trajectory = new DisplacementTrajectory(trajectory);
 
@@ -50,13 +49,12 @@ public class FollowPathCommand extends CommandBase {
             yPoints[i] = p.position.y;
         }
 
+        this.telemetryHandler = telemetryHandler;
         addRequirements(drive);
     }
 
     @Override
     public void execute() {
-        TelemetryPacket packet = telemetryHandler.getCurrentPacket();
-
         if (disp + 1 >= trajectory.length()) {
             drive.setDrivePowers(0, 0, 0, 0);
 
@@ -81,11 +79,11 @@ public class FollowPathCommand extends CommandBase {
 
         // write error to telemetry
         Pose2d error = poseTarget.value().minusExp(drive.getPose());
-        packet.put("x error", error.position.x);
-        packet.put("y error", error.position.y);
-        packet.put("heading error (deg)", Math.toDegrees(error.heading.log()));
+        telemetryHandler.addData("x error", error.position.x);
+        telemetryHandler.addData("y error", error.position.y);
+        telemetryHandler.addData("heading error (deg)", Math.toDegrees(error.heading.log()));
 
-        Canvas c = packet.fieldOverlay();
+        Canvas c = telemetryHandler.fieldOverlay();
 
         // draw target pose
         c.setStroke("#4CAF50");
@@ -95,8 +93,6 @@ public class FollowPathCommand extends CommandBase {
         c.setStroke("#4CAF507A");
         c.setStrokeWidth(1);
         c.strokePolyline(xPoints, yPoints);
-
-        telemetryHandler.updateCurrentPacket(packet);
     }
 
     @Override

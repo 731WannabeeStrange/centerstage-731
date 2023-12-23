@@ -8,7 +8,7 @@ public class CachingDcMotorSimple extends CachingHardwareDevice implements DcMot
     private final DcMotorSimple dcMotorSimple;
 
     public CachingDcMotorSimple(DcMotorSimple motor) {
-        this(motor, 0.02);
+        this(motor, 0);
     }
 
     public CachingDcMotorSimple(DcMotorSimple motor, double changeThreshold) {

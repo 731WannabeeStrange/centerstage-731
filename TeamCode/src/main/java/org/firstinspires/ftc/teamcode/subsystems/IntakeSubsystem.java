@@ -1,14 +1,16 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
+import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
+import org.firstinspires.ftc.teamcode.utils.caching.CachingServo;
 
 @Config
 public class IntakeSubsystem extends SubsystemBase {
@@ -16,21 +18,22 @@ public class IntakeSubsystem extends SubsystemBase {
     private final Servo rightServo;
     private final Servo leftServo;
 
-    public static double intakeMotorPower = 0.75;
-    public static double intakeServoRightUpPosition = 0.33;
+    public static double intakeMotorPower = 0.7;
+    public static double intakeServoRightUpPosition = 0.38;
     public static double intakeServoLeftUpPosition = 0.35;
-    public static double intakeServoDownOffset = 0.4;
+    public static double intakeServoDownOffset = 0.43;
 
-    private final TelemetryHandler telemetryHandler = TelemetryHandler.getInstance();
+    private final TelemetryHandler telemetryHandler;
 
-    public IntakeSubsystem(HardwareMap hardwareMap) {
-        intakeMotor = hardwareMap.get(DcMotorEx.class, "intakeMotor");
+    public IntakeSubsystem(HardwareMap hardwareMap, TelemetryHandler telemetryHandler) {
+        intakeMotor = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "intakeMotor"));
 
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        intakeMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // might change names in config
-        rightServo = hardwareMap.get(Servo.class, "rightIntake");
-        leftServo = hardwareMap.get(Servo.class, "leftIntake");
+        rightServo = new CachingServo(hardwareMap.get(Servo.class, "rightIntake"));
+        leftServo = new CachingServo(hardwareMap.get(Servo.class, "leftIntake"));
 
         leftServo.setDirection(Servo.Direction.REVERSE);
 
@@ -38,16 +41,15 @@ public class IntakeSubsystem extends SubsystemBase {
         rightServo.setPosition(intakeServoRightUpPosition);
         leftServo.setPosition(intakeServoLeftUpPosition);
 
+        this.telemetryHandler = telemetryHandler;
         register();
     }
 
     @Override
     public void periodic() {
-        TelemetryPacket packet = telemetryHandler.getCurrentPacket();
-        packet.put("right intake servo position", rightServo.getPosition());
-        packet.put("left intake servo position", leftServo.getPosition());
-        packet.put("intake motor power", intakeMotor.getPower());
-        telemetryHandler.updateCurrentPacket(packet);
+        telemetryHandler.addData("right intake servo position", rightServo.getPosition());
+        telemetryHandler.addData("left intake servo position", leftServo.getPosition());
+        telemetryHandler.addData("intake motor power", intakeMotor.getPower());
     }
 
     public void start() {
