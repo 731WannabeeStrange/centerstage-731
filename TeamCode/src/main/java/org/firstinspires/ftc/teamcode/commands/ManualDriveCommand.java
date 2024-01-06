@@ -1,16 +1,12 @@
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.DualNum;
-import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.Rotation2d;
-import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.function.BooleanSupplier;
@@ -19,20 +15,15 @@ import java.util.function.DoubleSupplier;
 @Config
 public class ManualDriveCommand extends CommandBase {
 
-    private final DriveSubsystem drive;
+    public static double P = 0.03;
+    private final MecanumDrive drive;
     private final DoubleSupplier strafe, forward, rotation;
     private final BooleanSupplier autoTurn0, autoTurn90, autoTurn180, autoTurn270;
     private final TelemetryHandler telemetryHandler;
-
-    private enum TurnState {
-        DRIVER,
-        AUTO
-    }
     private TurnState turnState = TurnState.DRIVER;
     private double desiredAngle = 0;
-    public static double P = 0.03;
 
-    public ManualDriveCommand(DriveSubsystem drive, DoubleSupplier strafe, DoubleSupplier forward,
+    public ManualDriveCommand(MecanumDrive drive, DoubleSupplier strafe, DoubleSupplier forward,
                               DoubleSupplier rotation, BooleanSupplier autoTurn0,
                               BooleanSupplier autoTurn90, BooleanSupplier autoTurn180,
                               BooleanSupplier autoTurn270, TelemetryHandler telemetryHandler) {
@@ -100,24 +91,11 @@ public class ManualDriveCommand extends CommandBase {
                 throw new RuntimeException("weird turn state");
         }
 
-        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
-                PoseVelocity2dDual.constant(powers, 1));
+        drive.setDrivePowers(powers);
+    }
 
-        double maxPowerMag = 1;
-        for (DualNum<Time> power : wheelVels.all()) {
-            maxPowerMag = Math.max(maxPowerMag, power.value());
-        }
-
-        drive.setDrivePowers(
-                wheelVels.leftFront.get(0) / maxPowerMag,
-                wheelVels.leftBack.get(0) / maxPowerMag,
-                wheelVels.rightBack.get(0) / maxPowerMag,
-                wheelVels.rightFront.get(0) / maxPowerMag
-        );
-
-        telemetryHandler.addData("left front power", wheelVels.leftFront.get(0) / maxPowerMag);
-        telemetryHandler.addData("left back power", wheelVels.leftBack.get(0) / maxPowerMag);
-        telemetryHandler.addData("right back power", wheelVels.rightBack.get(0) / maxPowerMag);
-        telemetryHandler.addData("right front power", wheelVels.rightFront.get(0) / maxPowerMag);
+    private enum TurnState {
+        DRIVER,
+        AUTO
     }
 }

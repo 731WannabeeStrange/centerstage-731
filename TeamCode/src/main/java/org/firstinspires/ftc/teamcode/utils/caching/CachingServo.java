@@ -4,9 +4,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 
 public class CachingServo extends CachingHardwareDevice implements Servo {
+    private final Servo servo;
     private double cachedPosition = 0;
     private double changeThreshold;
-    private final Servo servo;
 
     public CachingServo(Servo servo) {
         this(servo, 0.01);
@@ -37,13 +37,18 @@ public class CachingServo extends CachingHardwareDevice implements Servo {
     }
 
     @Override
+    public Direction getDirection() {
+        return servo.getDirection();
+    }
+
+    @Override
     public void setDirection(Direction direction) {
         servo.setDirection(direction);
     }
 
     @Override
-    public Direction getDirection() {
-        return servo.getDirection();
+    public double getPosition() {
+        return servo.getPosition();
     }
 
     @Override
@@ -54,11 +59,6 @@ public class CachingServo extends CachingHardwareDevice implements Servo {
             servo.setPosition(position);
             cachedPosition = position;
         }
-    }
-
-    @Override
-    public double getPosition() {
-        return servo.getPosition();
     }
 
     @Override

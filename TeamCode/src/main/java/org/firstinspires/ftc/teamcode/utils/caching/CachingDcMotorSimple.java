@@ -3,9 +3,9 @@ package org.firstinspires.ftc.teamcode.utils.caching;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class CachingDcMotorSimple extends CachingHardwareDevice implements DcMotorSimple {
+    private final DcMotorSimple dcMotorSimple;
     private double cachedPower = 0;
     private double changeThreshold;
-    private final DcMotorSimple dcMotorSimple;
 
     public CachingDcMotorSimple(DcMotorSimple motor) {
         this(motor, 0);
@@ -26,13 +26,18 @@ public class CachingDcMotorSimple extends CachingHardwareDevice implements DcMot
     }
 
     @Override
+    public Direction getDirection() {
+        return dcMotorSimple.getDirection();
+    }
+
+    @Override
     public void setDirection(Direction direction) {
         dcMotorSimple.setDirection(direction);
     }
 
     @Override
-    public Direction getDirection() {
-        return dcMotorSimple.getDirection();
+    public double getPower() {
+        return dcMotorSimple.getPower();
     }
 
     @Override
@@ -43,10 +48,5 @@ public class CachingDcMotorSimple extends CachingHardwareDevice implements DcMot
             this.cachedPower = power;
             dcMotorSimple.setPower(power);
         }
-    }
-
-    @Override
-    public double getPower() {
-        return dcMotorSimple.getPower();
     }
 }

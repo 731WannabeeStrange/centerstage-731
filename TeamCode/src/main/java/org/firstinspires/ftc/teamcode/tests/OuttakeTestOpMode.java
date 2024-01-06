@@ -9,15 +9,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 @Config
 public class OuttakeTestOpMode extends LinearOpMode {
 
-    private enum ServoPosition {
-        DOWN,
-        MID,
-        UP
-    }
-
+    public static double downPos = 0, midPos = 0.5, upPos = 1;
     private ServoPosition position = ServoPosition.DOWN;
     private Servo outtake;
-    public static double downPos = 0, midPos = 0.5, upPos = 1;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -56,5 +50,11 @@ public class OuttakeTestOpMode extends LinearOpMode {
             }
             telemetry.update();
         }
+    }
+
+    private enum ServoPosition {
+        DOWN,
+        MID,
+        UP
     }
 }

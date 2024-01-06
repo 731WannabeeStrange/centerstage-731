@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 public class CachingDcMotor extends CachingDcMotorSimple implements DcMotor {
-    private double cachedTargetPosition = 0;
     private final double targetPositionChangeThreshold;
     private final DcMotor dcMotor;
+    private double cachedTargetPosition = 0;
 
     public CachingDcMotor(DcMotor motor) {
         this(motor, 10);
@@ -46,13 +46,13 @@ public class CachingDcMotor extends CachingDcMotorSimple implements DcMotor {
     }
 
     @Override
-    public void setZeroPowerBehavior(ZeroPowerBehavior zeroPowerBehavior) {
-        dcMotor.setZeroPowerBehavior(zeroPowerBehavior);
+    public ZeroPowerBehavior getZeroPowerBehavior() {
+        return dcMotor.getZeroPowerBehavior();
     }
 
     @Override
-    public ZeroPowerBehavior getZeroPowerBehavior() {
-        return dcMotor.getZeroPowerBehavior();
+    public void setZeroPowerBehavior(ZeroPowerBehavior zeroPowerBehavior) {
+        dcMotor.setZeroPowerBehavior(zeroPowerBehavior);
     }
 
     @Override
@@ -67,16 +67,16 @@ public class CachingDcMotor extends CachingDcMotorSimple implements DcMotor {
     }
 
     @Override
+    public int getTargetPosition() {
+        return dcMotor.getTargetPosition();
+    }
+
+    @Override
     public void setTargetPosition(int position) {
         if (Math.abs(cachedTargetPosition - position) >= targetPositionChangeThreshold) {
             dcMotor.setTargetPosition(position);
             cachedTargetPosition = position;
         }
-    }
-
-    @Override
-    public int getTargetPosition() {
-        return dcMotor.getTargetPosition();
     }
 
     @Override
@@ -90,12 +90,12 @@ public class CachingDcMotor extends CachingDcMotorSimple implements DcMotor {
     }
 
     @Override
-    public void setMode(RunMode mode) {
-        dcMotor.setMode(mode);
+    public RunMode getMode() {
+        return dcMotor.getMode();
     }
 
     @Override
-    public RunMode getMode() {
-        return dcMotor.getMode();
+    public void setMode(RunMode mode) {
+        dcMotor.setMode(mode);
     }
 }

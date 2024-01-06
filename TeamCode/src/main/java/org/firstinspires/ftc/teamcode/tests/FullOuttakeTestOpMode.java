@@ -14,17 +14,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class FullOuttakeTestOpMode extends LinearOpMode {
 
     public static double slidePower = 0.3;
+    public static double downPos = 0, midPos = 0.5, upPos = 1;
     private DcMotorEx slide;
-
-    private enum ServoPosition {
-        DOWN,
-        MID,
-        UP
-    }
-
     private ServoPosition position = ServoPosition.DOWN;
     private Servo outtake;
-    public static double downPos = 0, midPos = 0.5, upPos = 1;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -74,5 +67,11 @@ public class FullOuttakeTestOpMode extends LinearOpMode {
 
             telemetry.update();
         }
+    }
+
+    private enum ServoPosition {
+        DOWN,
+        MID,
+        UP
     }
 }

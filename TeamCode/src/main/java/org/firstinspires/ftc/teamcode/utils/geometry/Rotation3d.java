@@ -2,11 +2,6 @@ package org.firstinspires.ftc.teamcode.utils.geometry;
 
 import com.acmerobotics.roadrunner.Rotation2d;
 
-import org.firstinspires.ftc.robotcore.external.matrices.MatrixF;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Quaternion;
 
 public class Rotation3d {
@@ -20,14 +15,22 @@ public class Rotation3d {
         this.q = q.normalized();
     }
 
-    public Rotation3d(MatrixF rotMatrix) {
-        q = Quaternion.fromMatrix(rotMatrix, System.nanoTime());
-    }
-
     public Rotation3d(double roll, double pitch, double yaw) {
-        MatrixF rotMatrix = Orientation.getRotationMatrix(AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                AngleUnit.RADIANS, (float) roll, (float) pitch, (float) yaw);
-        q = Quaternion.fromMatrix(rotMatrix, System.nanoTime());
+        double cr = Math.cos(roll * 0.5);
+        double sr = Math.sin(roll * 0.5);
+
+        double cp = Math.cos(pitch * 0.5);
+        double sp = Math.sin(pitch * 0.5);
+
+        double cy = Math.cos(yaw * 0.5);
+        double sy = Math.sin(yaw * 0.5);
+
+        q = new Quaternion(
+                (float) (cr * cp * cy + sr * sp * sy),
+                (float) (sr * cp * cy - cr * sp * sy),
+                (float) (cr * sp * cy + sr * cp * sy),
+                (float) (cr * cp * sy - sr * sp * cy),
+                System.nanoTime());
     }
 
     public Rotation3d(Vector3d axis, double angle) {
@@ -75,23 +78,39 @@ public class Rotation3d {
         return new Rotation3d(other.q.multiply(q, System.nanoTime()));
     }
 
-    // roll
-    public double getX() {
-        return q.toOrientation(AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS).firstAngle;
+    public double getRoll() {
+        double cxcy = 1.0 - 2.0 * (q.x * q.x + q.y * q.y);
+        double sxcy = 2.0 * (q.w * q.x + q.y * q.z);
+        double cy_sq = cxcy * cxcy + sxcy * sxcy;
+        if (cy_sq > 1e-20) {
+            return Math.atan2(sxcy, cxcy);
+        } else {
+            return 0.0;
+        }
     }
 
-    // pitch
-    public double getY() {
-        return q.toOrientation(AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS).secondAngle;
+    public double getPitch() {
+        double ratio = 2.0 * (q.w * q.y - q.z * q.x);
+        if (Math.abs(ratio) >= 1.0) {
+            return Math.copySign(Math.PI / 2.0, ratio);
+        } else {
+            return Math.asin(ratio);
+        }
     }
 
-    // yaw
-    public double getZ() {
-        return q.toOrientation(AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS).thirdAngle;
+    public double getYaw() {
+        double cycz = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+        double cysz = 2.0 * (q.w * q.z + q.x * q.y);
+        double cy_sq = cycz * cycz + cysz * cysz;
+        if (cy_sq > 1e-20) {
+            return Math.atan2(cysz, cycz);
+        } else {
+            return Math.atan2(2.0 * q.w * q.z, q.w * q.w - q.z * q.z);
+        }
     }
 
     public Rotation2d toRotation2d() {
-        return Rotation2d.fromDouble(getZ());
+        return Rotation2d.fromDouble(getYaw());
     }
 
     public Quaternion getQuaternion() {

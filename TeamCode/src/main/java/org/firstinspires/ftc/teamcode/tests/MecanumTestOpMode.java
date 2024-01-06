@@ -16,8 +16,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @TeleOp(group = "test")
 @Config
-public class MecanumTestOpMode extends LinearOpMode
-{
+public class MecanumTestOpMode extends LinearOpMode {
+    public static double P = 0.04;
+    public static double I = 0;
+    public static double D = 0;
+    private final ElapsedTime eTime = new ElapsedTime();
     public double leftStickY;
     public double leftStickX;
     public double rightStickX;
@@ -25,47 +28,29 @@ public class MecanumTestOpMode extends LinearOpMode
     public double FR_power;
     public double RL_power;
     public double RR_power;
-
-    public static double P = 0.04;
-    public static double I = 0;
-    public static double D = 0;
-
-    private double integral, previous_error = 0;
-
     public double newForward;
     public double newStrafe;
     public double denominator;
-
+    public Orientation angles;
+    private double integral, previous_error = 0;
     private BNO055IMU imu;
     private DcMotor fr;
     private DcMotor rr;
     private DcMotor fl;
     private DcMotor rl;
-
-    public Orientation angles;
-
     private double error;
     private double errorMin;
     private double desiredAngle = 0;
     private String turnState = "auto";
-
-    private enum driveMode {
-        DRIVER_CONTROLLED,
-        AUTO_CONTROL
-    }
-
-
     private driveMode driveState = driveMode.AUTO_CONTROL;
-
-    private final ElapsedTime eTime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "AdafruitIMUCalibration.json"; // see the calibration sample op mode
         parameters.mode = BNO055IMU.SensorMode.IMU;
         // parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
@@ -121,7 +106,7 @@ public class MecanumTestOpMode extends LinearOpMode
         float pi = 3.1415926f;
 
         float gyro_degrees = angles.firstAngle;
-        float gyro_radians = gyro_degrees * pi/180;
+        float gyro_radians = gyro_degrees * pi / 180;
         newForward = leftStickY * Math.cos(gyro_radians) + leftStickX * Math.sin(gyro_radians);
         newStrafe = -leftStickY * Math.sin(gyro_radians) + leftStickX * Math.cos(gyro_radians);
     }
@@ -231,5 +216,10 @@ public class MecanumTestOpMode extends LinearOpMode
         fr.setPower(FR_power);
         rl.setPower(RL_power);
         rr.setPower(RR_power);
+    }
+
+    private enum driveMode {
+        DRIVER_CONTROLLED,
+        AUTO_CONTROL
     }
 }

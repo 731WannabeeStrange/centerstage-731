@@ -41,11 +41,6 @@ public class CachingDcMotorEx extends CachingDcMotor implements DcMotorEx {
     }
 
     @Override
-    public void setVelocity(double angularRate) {
-        dcMotorEx.setVelocity(angularRate);
-    }
-
-    @Override
     public void setVelocity(double angularRate, AngleUnit unit) {
         dcMotorEx.setVelocity(angularRate, unit);
     }
@@ -53,6 +48,11 @@ public class CachingDcMotorEx extends CachingDcMotor implements DcMotorEx {
     @Override
     public double getVelocity() {
         return dcMotorEx.getVelocity();
+    }
+
+    @Override
+    public void setVelocity(double angularRate) {
+        dcMotorEx.setVelocity(angularRate);
     }
 
     @Override
@@ -93,13 +93,13 @@ public class CachingDcMotorEx extends CachingDcMotor implements DcMotorEx {
     }
 
     @Override
-    public void setTargetPositionTolerance(int tolerance) {
-        dcMotorEx.setTargetPositionTolerance(tolerance);
+    public int getTargetPositionTolerance() {
+        return dcMotorEx.getTargetPositionTolerance();
     }
 
     @Override
-    public int getTargetPositionTolerance() {
-        return dcMotorEx.getTargetPositionTolerance();
+    public void setTargetPositionTolerance(int tolerance) {
+        dcMotorEx.setTargetPositionTolerance(tolerance);
     }
 
     @Override

@@ -10,12 +10,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp
 @Config
 public class ServoDiagnosticOpMode extends OpMode {
-    private Servo intakeServoRight, intakeServoLeft;
-    private final MultipleTelemetry multipleTelemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
-
     public static double servoRightUpPos = 0.33;
     public static double servoLeftUpPos = 0.35;
     public static double offset = 0.4;
+    private final MultipleTelemetry multipleTelemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
+    private Servo intakeServoRight, intakeServoLeft;
 
     @Override
     public void init() {
