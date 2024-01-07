@@ -4,7 +4,7 @@ import android.util.Size;
 
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Twist2dDual;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -88,10 +88,10 @@ public class DataLoggerOpMode extends LinearOpMode {
     }
 
     private class LogMessage {
-        private long timestamp;
-        private Twist2dDual<Time> localizerTwist;
-        private ArrayList<AprilTagDetection> camera1Detections;
-        private ArrayList<AprilTagDetection> camera2Detections;
+        private final long timestamp;
+        private final Twist2dDual<Time> localizerTwist;
+        private final ArrayList<AprilTagDetection> camera1Detections;
+        private final ArrayList<AprilTagDetection> camera2Detections;
 
         public LogMessage(Twist2dDual<Time> localizerTwist, ArrayList<AprilTagDetection> camera1Detections, ArrayList<AprilTagDetection> camera2Detections) {
             timestamp = System.nanoTime();
@@ -99,43 +99,11 @@ public class DataLoggerOpMode extends LinearOpMode {
             this.camera1Detections = camera1Detections;
             this.camera2Detections = camera2Detections;
         }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        public void setTimestamp(long timestamp) {
-            this.timestamp = timestamp;
-        }
-
-        public Twist2dDual<Time> getLocalizerTwist() {
-            return localizerTwist;
-        }
-
-        public void setLocalizerTwist(Twist2dDual<Time> localizerTwist) {
-            this.localizerTwist = localizerTwist;
-        }
-
-        public ArrayList<AprilTagDetection> getCamera1Detections() {
-            return camera1Detections;
-        }
-
-        public void setCamera1Detections(ArrayList<AprilTagDetection> camera1Detections) {
-            this.camera1Detections = camera1Detections;
-        }
-
-        public ArrayList<AprilTagDetection> getCamera2Detections() {
-            return camera2Detections;
-        }
-
-        public void setCamera2Detections(ArrayList<AprilTagDetection> camera2Detections) {
-            this.camera2Detections = camera2Detections;
-        }
     }
 
     private class BufferedFileWriter {
         private final BufferedWriter bufferedWriter;
-        private final ObjectMapper objectMapper = new ObjectMapper();
+        private final Gson gson = new Gson();
 
         public BufferedFileWriter(String filePath) {
             File tmp = new File(filePath);
@@ -151,7 +119,7 @@ public class DataLoggerOpMode extends LinearOpMode {
         }
 
         public void writeMessage(LogMessage message) throws IOException {
-            bufferedWriter.write(objectMapper.writeValueAsString(message));
+            bufferedWriter.write(gson.toJson(message));
         }
 
         public void close() throws IOException {
