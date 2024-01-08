@@ -35,6 +35,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
 import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
+import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
@@ -70,10 +71,10 @@ public class MecanumDrive extends SubsystemBase {
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
-        leftFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rrMotor"));
-        leftBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "frMotor"));
-        rightBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "flMotor"));
-        rightFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rlMotor"));
+        leftFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "leftFront"));
+        leftBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "leftBack"));
+        rightBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rightBack"));
+        rightFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rightFront"));
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -91,9 +92,9 @@ public class MecanumDrive extends SubsystemBase {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        // localizer = new ThreeDeadWheelLocalizer(hardwareMap, Params.inPerTick);
+        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick, startPose);
         // two-wheel for now so we can have heading without tuned odo
-        localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick, startPose);
+        //localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick, startPose);
 
         this.telemetryHandler = telemetryHandler;
         register();

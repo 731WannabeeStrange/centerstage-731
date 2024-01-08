@@ -36,7 +36,7 @@ class ThreeDeadWheelLocalizer(
     init {
         par0 = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "leftOuttake")))
         par1 = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "rightOdo")))
-        perp = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "frMotor")))
+        perp = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "leftBack")))
         lastPar0Pos = par0.getPositionAndVelocity().position
         lastPar1Pos = par1.getPositionAndVelocity().position
         lastPerpPos = perp.getPositionAndVelocity().position

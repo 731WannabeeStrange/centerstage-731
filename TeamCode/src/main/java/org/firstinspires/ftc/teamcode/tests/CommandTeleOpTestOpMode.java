@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Lift;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
@@ -34,10 +35,16 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
 
         MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
         Intake intakeSubsystem = new Intake(hardwareMap, telemetryHandler);
+        //Lift liftSubsystem = new Lift(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
 
-        gamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenActive(new InstantCommand(intakeSubsystem::start, intakeSubsystem));
+        gamepad.getGamepadButton(GamepadKeys.Button.B)
+                .whenActive(new InstantCommand(intakeSubsystem::start, intakeSubsystem))
+                .whenInactive(new InstantCommand(intakeSubsystem::stop, intakeSubsystem));
+        //gamepad.getGamepadButton(GamepadKeys.Button.Y)
+        //        .whenPressed(new InstantCommand(liftSubsystem::goToMaxScoringPos, liftSubsystem));
+        //gamepad.getGamepadButton(GamepadKeys.Button.A)
+        //        .whenPressed(new InstantCommand(liftSubsystem::goToMinScoringPos, liftSubsystem));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_UP),
@@ -45,7 +52,6 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_DOWN),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_LEFT),
                 telemetryHandler));
-        intakeSubsystem.setDefaultCommand(new PerpetualCommand(new InstantCommand(intakeSubsystem::stop, intakeSubsystem)));
 
         waitForStart();
 

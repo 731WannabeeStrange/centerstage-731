@@ -41,7 +41,7 @@ class TwoDeadWheelLocalizer(
 
     init {
         par = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "leftOuttake")))
-        perp = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "frMotor")))
+        perp = OverflowEncoder(RawEncoder(hardwareMap.get(DcMotorEx::class.java, "leftBack")))
         lastParPos = par.getPositionAndVelocity().position
         lastPerpPos = perp.getPositionAndVelocity().position
         lastHeading = Rotation2d.exp(imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS))
