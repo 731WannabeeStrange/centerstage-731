@@ -1,61 +1,27 @@
 package org.firstinspires.ftc.teamcode.utils.localization
 
-import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.Pose2d
 import com.acmerobotics.roadrunner.PoseVelocity2d
+import com.acmerobotics.roadrunner.Twist2d
 import com.acmerobotics.roadrunner.Vector2d
-import org.firstinspires.ftc.teamcode.utils.TelemetryHandler
-import org.firstinspires.ftc.teamcode.utils.vision.AprilTagLocalizer
+import com.qualcomm.robotcore.hardware.HardwareMap
+import wannabee.lie.LiePose2d
+import wannabee.lie.LieTwist2d
 
-@Config
+private fun Twist2d.toLieTwist2d() = LieTwist2d(this.line.x, this.line.y, this.angle)
+private fun Pose2d.toLiePose2d() = LiePose2d(this.position.x, this.position.y, this.heading.log())
+private fun LiePose2d.toPose2d() = Pose2d(this.position.a1, this.position.a2, this.rotation.log())
+
 class VisionOdometryLocalizer(
-    private val odometryLocalizer: Localizer,
-    private val aprilTagLocalizer: AprilTagLocalizer,
-    override var poseEstimate: Pose2d,
-    private val telemetryHandler: TelemetryHandler
-) : Localizer {
-    override var poseVelocity: PoseVelocity2d = PoseVelocity2d(Vector2d(0.0, 0.0), 0.0)
+    hardwareMap: HardwareMap,
+    private val inPerTick: Double,
+    override var poseEstimate: Pose2d
+): Localizer {
+    override var poseVelocity = PoseVelocity2d(Vector2d(0.0, 0.0), 0.0)
         private set
+    val odometryLocalizer = ThreeDeadWheelLocalizer(hardwareMap, inPerTick, poseEstimate)
 
     override fun update() {
-        odometryLocalizer.poseEstimate = poseEstimate
-        odometryLocalizer.update()
-        val odometryPose = odometryLocalizer.poseEstimate
-
-        aprilTagLocalizer.setReferencePose(odometryPose)
-        val aprilTagPose: Pose2d? = aprilTagLocalizer.getPoseEstimate()
-        telemetryHandler.addData(
-            "Odometry pose", String.format(
-                "x: %.1f y: %.1f heading: %.1f",
-                odometryPose.position.x, odometryPose.position.y,
-                Math.toDegrees(odometryPose.heading.toDouble())
-            )
-        )
-
-        if (aprilTagPose != null) {
-            poseEstimate = Pose2d(
-                aprilTagPose.position.times(cameraEstimateWeight)
-                    .plus(odometryPose.position.times(1 - cameraEstimateWeight)),
-                aprilTagPose.heading.toDouble() * cameraEstimateWeight
-                        + odometryPose.heading.toDouble() * (1 - cameraEstimateWeight)
-            )
-            telemetryHandler.addData(
-                "AprilTag pose", String.format(
-                    "x: %.1f y: %.1f heading: %.1f",
-                    aprilTagPose.position.x, aprilTagPose.position.y,
-                    Math.toDegrees(aprilTagPose.heading.toDouble())
-                )
-            )
-        } else {
-            poseEstimate = odometryPose
-            telemetryHandler.addData("AprilTag pose", "stale")
-        }
-
-        poseVelocity = odometryLocalizer.poseVelocity
-    }
-
-    companion object {
-        @JvmField
-        var cameraEstimateWeight = 0.02
+        TODO("Not yet implemented")
     }
 }

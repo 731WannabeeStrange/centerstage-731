@@ -1,10 +1,10 @@
-package org.firstinspires.ftc.teamcode.utils.vision
+package org.firstinspires.ftc.teamcode.utils.old
 
 import com.acmerobotics.roadrunner.Pose2d
-import org.firstinspires.ftc.teamcode.utils.geometry.Pose3d
-import org.firstinspires.ftc.teamcode.utils.geometry.Rotation3d
-import org.firstinspires.ftc.teamcode.utils.geometry.Transform3d
-import org.firstinspires.ftc.teamcode.utils.geometry.Vector3d
+import org.firstinspires.ftc.teamcode.utils.old.geometry.Pose3d
+import org.firstinspires.ftc.teamcode.utils.old.geometry.Rotation3d
+import org.firstinspires.ftc.teamcode.utils.old.geometry.Transform3d
+import org.firstinspires.ftc.teamcode.utils.old.geometry.Vector3d
 import org.firstinspires.ftc.vision.VisionPortal
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor
@@ -60,7 +60,10 @@ class AprilTagLocalizer(
     }
 
     fun setReferencePose(referencePose: Pose2d) {
-        this.referencePose = Pose3d(referencePose)
+        this.referencePose =
+            Pose3d(
+                referencePose
+            )
     }
 
     fun getPoseEstimate(): Pose2d? {
@@ -81,10 +84,11 @@ class AprilTagLocalizer(
                             numCurrentValidDetections++
 
                             // create a Pose3d with where the AprilTag is on the field
-                            val targetPose = Pose3d(
-                                Vector3d(aprilTagDetection.metadata.fieldPosition),
-                                Rotation3d(aprilTagDetection.metadata.fieldOrientation)
-                            )
+                            val targetPose =
+                                Pose3d(
+                                    Vector3d(aprilTagDetection.metadata.fieldPosition),
+                                    Rotation3d(aprilTagDetection.metadata.fieldOrientation)
+                                )
 
                             // create a Transform3d from the camera to the AprilTag
                             val ftcPose = aprilTagDetection.ftcPose
@@ -124,10 +128,11 @@ class AprilTagLocalizer(
                             numCurrentValidDetections++
 
                             // create a Pose3d with where the AprilTag is on the field
-                            val targetPose = Pose3d(
-                                Vector3d(aprilTagDetection.metadata.fieldPosition),
-                                Rotation3d(aprilTagDetection.metadata.fieldOrientation)
-                            )
+                            val targetPose =
+                                Pose3d(
+                                    Vector3d(aprilTagDetection.metadata.fieldPosition),
+                                    Rotation3d(aprilTagDetection.metadata.fieldOrientation)
+                                )
 
                             // create a Transform3d from the camera to the AprilTag
                             val ftcPose = aprilTagDetection.ftcPose

@@ -45,9 +45,8 @@ android {
 }
 
 repositories {
-    maven {
-        url = 'https://www.matthewo.tech/maven/'
-    }
+    maven { url = 'https://www.matthewo.tech/maven/' }
+    maven { url = 'https://jitpack.io' }
 }
 
 dependencies {
@@ -58,6 +57,7 @@ dependencies {
     implementation 'com.acmerobotics.roadrunner:core:1.0.0-beta6'
     implementation "com.acmerobotics.roadrunner:ftc:0.1.10"
     implementation 'org.team11260:fast-load:0.1.2'
+    implementation 'com.github.arisingh8:wannabee-lie:master-SNAPSHOT'
 }
 
 kotlin {
