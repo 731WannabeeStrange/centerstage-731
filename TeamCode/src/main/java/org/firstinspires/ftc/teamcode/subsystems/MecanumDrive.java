@@ -34,9 +34,9 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
 import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
+import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
 import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -92,7 +92,7 @@ public class MecanumDrive extends SubsystemBase {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick, startPose);
+        localizer = new AbsoluteLocalizer(new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick), startPose);
         // two-wheel for now so we can have heading without tuned odo
         //localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick, startPose);
 

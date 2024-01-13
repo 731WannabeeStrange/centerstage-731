@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.tests.datalog;
+package org.firstinspires.ftc.teamcode.utils.localization;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.DualNum;
@@ -16,11 +16,15 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 @Config
-public final class IncrementalTwoDeadWheelLocalizer implements IncrementalLocalizer {
-    public static TwoDeadWheelLocalizer.Params PARAMS = new TwoDeadWheelLocalizer.Params();
+public final class TwoDeadWheelLocalizer implements IncrementalLocalizer {
+    public static class Params {
+        public double parYTicks = 0.0; // y position of the parallel encoder (in tick units)
+        public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units)
+    }
+
+    public static Params PARAMS = new Params();
 
     public final Encoder par, perp;
     public final IMU imu;
@@ -32,7 +36,7 @@ public final class IncrementalTwoDeadWheelLocalizer implements IncrementalLocali
 
     private double lastRawHeadingVel, headingVelOffset;
 
-    public IncrementalTwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, double inPerTick) {
+    public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, double inPerTick) {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html

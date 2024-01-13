@@ -23,6 +23,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
+import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
+import org.firstinspires.ftc.teamcode.utils.localization.IncrementalLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
@@ -55,15 +57,20 @@ public final class TuningOpModes {
 
             List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
             List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
-            if (md.localizer instanceof ThreeDeadWheelLocalizer) {
-                ThreeDeadWheelLocalizer dl = (ThreeDeadWheelLocalizer) md.localizer;
-                parEncs.add(dl.par0);
-                parEncs.add(dl.par1);
-                perpEncs.add(dl.perp);
-            } else if (md.localizer instanceof TwoDeadWheelLocalizer) {
-                TwoDeadWheelLocalizer dl = (TwoDeadWheelLocalizer) md.localizer;
-                parEncs.add(dl.par);
-                perpEncs.add(dl.perp);
+            if (md.localizer instanceof AbsoluteLocalizer) {
+                IncrementalLocalizer incrementalLocalizer = ((AbsoluteLocalizer) md.localizer).getIncrementalLocalizer();
+                if (incrementalLocalizer instanceof ThreeDeadWheelLocalizer) {
+                    ThreeDeadWheelLocalizer dl = (ThreeDeadWheelLocalizer) incrementalLocalizer;
+                    parEncs.add(dl.par0);
+                    parEncs.add(dl.par1);
+                    perpEncs.add(dl.perp);
+                } else if (incrementalLocalizer instanceof TwoDeadWheelLocalizer) {
+                    TwoDeadWheelLocalizer dl = (TwoDeadWheelLocalizer) incrementalLocalizer;
+                    parEncs.add(dl.par);
+                    perpEncs.add(dl.perp);
+                } else {
+                    throw new IllegalArgumentException("Can't tune with this incremental localizer: " + incrementalLocalizer.getClass().getName());
+                }
             } else {
                 throw new IllegalArgumentException("Can't tune with this localizer: " + md.localizer.getClass().getName());
             }

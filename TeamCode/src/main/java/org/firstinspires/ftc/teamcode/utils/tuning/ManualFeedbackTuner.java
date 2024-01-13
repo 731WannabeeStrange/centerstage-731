@@ -8,8 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.List;
 
@@ -25,18 +23,6 @@ public final class ManualFeedbackTuner extends LinearOpMode {
 
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0), telemetryHandler);
-
-        if (drive.localizer instanceof TwoDeadWheelLocalizer) {
-            if (TwoDeadWheelLocalizer.PARAMS.perpXTicks == 0 && TwoDeadWheelLocalizer.PARAMS.parYTicks == 0) {
-                throw new AssertionError("Odometry wheel locations not set! Run AngularRampLogger to tune them.");
-            }
-        } else if (drive.localizer instanceof ThreeDeadWheelLocalizer) {
-            if (ThreeDeadWheelLocalizer.PARAMS.perpXTicks == 0 && ThreeDeadWheelLocalizer.PARAMS.par0YTicks == 0 && ThreeDeadWheelLocalizer.PARAMS.par1YTicks == 1) {
-                throw new AssertionError("Odometry wheel locations not set! Run AngularRampLogger to tune them.");
-            }
-        } else {
-            throw new IllegalArgumentException("Can't tune with this localizer: " + drive.localizer.getClass().getName());
-        }
 
         Command followCommand = drive.commandBuilder(new Pose2d(0, 0, 0))
                 .lineToX(DISTANCE)

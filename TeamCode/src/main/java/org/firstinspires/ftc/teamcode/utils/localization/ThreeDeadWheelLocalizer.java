@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.tests.datalog;
+package org.firstinspires.ftc.teamcode.utils.localization;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.DualNum;
@@ -13,11 +13,15 @@ import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
-
 @Config
-public final class IncrementalThreeDeadWheelLocalizer implements IncrementalLocalizer {
-    public static ThreeDeadWheelLocalizer.Params PARAMS = new ThreeDeadWheelLocalizer.Params();
+public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
+    public static class Params {
+        public double par0YTicks = 0.0; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = 1.0; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units)
+    }
+
+    public static Params PARAMS = new Params();
 
     public final Encoder par0, par1, perp;
 
@@ -25,7 +29,7 @@ public final class IncrementalThreeDeadWheelLocalizer implements IncrementalLoca
 
     private int lastPar0Pos, lastPar1Pos, lastPerpPos;
 
-    public IncrementalThreeDeadWheelLocalizer(HardwareMap hardwareMap, double inPerTick) {
+    public ThreeDeadWheelLocalizer(HardwareMap hardwareMap, double inPerTick) {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html

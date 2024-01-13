@@ -12,6 +12,8 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
+import org.firstinspires.ftc.teamcode.utils.localization.IncrementalLocalizer;
+import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
@@ -34,7 +36,7 @@ public class DataLoggerOpMode extends LinearOpMode {
         MecanumDrive.Params PARAMS = new MecanumDrive.Params();
 
         SimplifiedMecanumDrive drive = new SimplifiedMecanumDrive(hardwareMap);
-        IncrementalLocalizer localizer = new IncrementalThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
+        IncrementalLocalizer localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
 
         AprilTagProcessor aprilTagProcessor1 = new AprilTagProcessor.Builder()
                 .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
