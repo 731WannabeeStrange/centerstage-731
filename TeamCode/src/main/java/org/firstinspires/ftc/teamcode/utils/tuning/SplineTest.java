@@ -25,7 +25,7 @@ public final class SplineTest extends LinearOpMode {
 
         Command followCommand = drive.commandBuilder(drive.getPose())
                 .splineTo(new Vector2d(30, 30), Math.PI / 2)
-                .splineTo(new Vector2d(60, 0), Math.PI)
+                .splineTo(new Vector2d(0, 60), Math.PI)
                 .build();
 
         CommandScheduler.getInstance().schedule(followCommand);

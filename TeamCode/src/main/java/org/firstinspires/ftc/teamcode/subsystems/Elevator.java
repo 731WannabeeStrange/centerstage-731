@@ -5,9 +5,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ProfiledPIDController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -16,10 +14,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 @Config
-public class Lift extends SubsystemBase {
+public class Elevator extends SubsystemBase {
     public static TrapezoidProfile.Constraints liftConstraints = new TrapezoidProfile.Constraints(2500, 2500);
     public static PIDCoefficients liftCoefficients = new PIDCoefficients(0.005, 0, 0);
-    private ProfiledPIDController liftController = new ProfiledPIDController(
+    private final ProfiledPIDController liftController = new ProfiledPIDController(
             liftCoefficients.p,
             liftCoefficients.i,
             liftCoefficients.d,
@@ -27,9 +25,13 @@ public class Lift extends SubsystemBase {
     );
     private DcMotorEx leftMotor, rightMotor;
 
-    private Servo bucketServo, leftLiftServo, rightLiftServo, wheelServo;
-    private RevColorSensorV3 frontColorSensor, backColorSensor;
-    private TelemetryHandler telemetryHandler;
+    private final Servo bucketServo;
+    private final Servo leftLiftServo;
+    private final Servo rightLiftServo;
+    private final Servo wheelServo;
+    private final RevColorSensorV3 frontColorSensor;
+    private final RevColorSensorV3 backColorSensor;
+    private final TelemetryHandler telemetryHandler;
 
     public static double IDLE_POS = 500;
     public static double MIN_SCORING_POS = 1000;
@@ -46,7 +48,7 @@ public class Lift extends SubsystemBase {
         OUTTAKE
     }
 
-    public Lift(HardwareMap hardwareMap, TelemetryHandler telemetryHandler) {
+    public Elevator(HardwareMap hardwareMap, TelemetryHandler telemetryHandler) {
         //leftMotor = hardwareMap.get(DcMotorEx.class, "leftLift");
         //rightMotor = hardwareMap.get(DcMotorEx.class, "rightLift");
 
