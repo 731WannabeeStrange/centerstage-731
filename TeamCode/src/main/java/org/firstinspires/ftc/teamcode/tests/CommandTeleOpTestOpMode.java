@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.tests;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -10,7 +11,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.commands.IntakePixelsCommand;
 import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
+import org.firstinspires.ftc.teamcode.commands.ManualScoringCommand;
+import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
+import org.firstinspires.ftc.teamcode.subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
@@ -21,7 +26,7 @@ import java.util.List;
 public class CommandTeleOpTestOpMode extends LinearOpMode {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
     private final TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
-    private final Pose2d startPose = new Pose2d(0, 0, 0);
+    private final Pose2d startPose = new Pose2d(0, 0, Math.PI/2);
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
     @Override
@@ -33,16 +38,10 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
 
         MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
         Intake intakeSubsystem = new Intake(hardwareMap, telemetryHandler);
-        //Lift liftSubsystem = new Lift(hardwareMap, telemetryHandler);
+        Elevator elevatorSubsystem = new Elevator(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
 
-        gamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenActive(new InstantCommand(intakeSubsystem::start, intakeSubsystem))
-                .whenInactive(new InstantCommand(intakeSubsystem::stop, intakeSubsystem));
-        //gamepad.getGamepadButton(GamepadKeys.Button.Y)
-        //        .whenPressed(new InstantCommand(liftSubsystem::goToMaxScoringPos, liftSubsystem));
-        //gamepad.getGamepadButton(GamepadKeys.Button.A)
-        //        .whenPressed(new InstantCommand(liftSubsystem::goToMinScoringPos, liftSubsystem));
+        scheduler.schedule(new ManualScoringCommand(intakeSubsystem, elevatorSubsystem, () -> gamepad.getButton(GamepadKeys.Button.B)));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_UP),

@@ -37,6 +37,7 @@ import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
 import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
 import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -81,8 +82,8 @@ public class MecanumDrive extends SubsystemBase {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        rightFront.setDirection(DcMotor.Direction.REVERSE);
-        rightBack.setDirection(DcMotor.Direction.REVERSE);
+        leftFront.setDirection(DcMotor.Direction.REVERSE);
+        leftBack.setDirection(DcMotor.Direction.REVERSE);
 
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -439,14 +440,14 @@ public class MecanumDrive extends SubsystemBase {
                 RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
 
         // drive model parameters
-        public double inPerTick = 0;
+        public double inPerTick = 0.00052843826;
         public double lateralInPerTick = 1;
-        public double trackWidthTicks = 0;
+        public double trackWidthTicks = 24733.9387697964;
 
         // feedforward parameters (in tick units)
-        public double kS = 0;
-        public double kV = 0;
-        public double kA = 0;
+        public double kS = 1.358108949318399;
+        public double kV = 0.00010658425400700672;
+        public double kA = 0.00002;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -458,12 +459,12 @@ public class MecanumDrive extends SubsystemBase {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 0.0;
-        public double lateralGain = 0.0;
-        public double headingGain = 0.0; // shared with turn
+        public double axialGain = 3.5;
+        public double lateralGain = 3.5;
+        public double headingGain = 3.5; // shared with turn
 
-        public double axialVelGain = 0.0;
-        public double lateralVelGain = 0.0;
-        public double headingVelGain = 0.0; // shared with turn
+        public double axialVelGain = 0.3;
+        public double lateralVelGain = 0.3;
+        public double headingVelGain = 0.3; // shared with turn
     }
 }

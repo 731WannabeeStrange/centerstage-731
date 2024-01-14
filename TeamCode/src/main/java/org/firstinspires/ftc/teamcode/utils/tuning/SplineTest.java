@@ -15,25 +15,18 @@ import java.util.List;
 public final class SplineTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        for (LynxModule module : allHubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-        }
-
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0), telemetryHandler);
-
-        Command followCommand = drive.commandBuilder(drive.getPose())
-                .splineTo(new Vector2d(30, 30), Math.PI / 2)
-                .splineTo(new Vector2d(0, 60), Math.PI)
-                .build();
-
-        CommandScheduler.getInstance().schedule(followCommand);
+        CommandScheduler.getInstance().schedule(drive.commandBuilder(drive.getPose())
+                .splineTo(new Vector2d(15, 15), Math.PI / 2)
+                .splineTo(new Vector2d(0, 30), Math.PI)
+                .build());
 
         waitForStart();
 
-        while (opModeIsActive() && CommandScheduler.getInstance().isScheduled(followCommand)) {
+        while (opModeIsActive()) {
             CommandScheduler.getInstance().run();
+            telemetryHandler.update();
         }
 
         CommandScheduler.getInstance().reset();
