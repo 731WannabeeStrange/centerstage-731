@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.tests;
+package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandScheduler;
@@ -18,11 +18,9 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.List;
 
-@TeleOp(group = "test")
-public class CommandTeleOpTestOpMode extends LinearOpMode {
-    private final CommandScheduler scheduler = CommandScheduler.getInstance();
-    private final TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
-    private final Pose2d startPose = new Pose2d(0, 0, Math.PI/2);
+@TeleOp(group = "comp")
+public class RedTeleOp extends LinearOpMode {
+    private final Pose2d startPose = new Pose2d(0, 0, Math.PI / 2);
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
 
     @Override
@@ -32,12 +30,14 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
+        TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
+
         MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
         Intake intakeSubsystem = new Intake(hardwareMap, telemetryHandler);
         Elevator elevatorSubsystem = new Elevator(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
 
-        scheduler.schedule(new ManualScoringCommand(intakeSubsystem, elevatorSubsystem,
+        CommandScheduler.getInstance().schedule(new ManualScoringCommand(intakeSubsystem, elevatorSubsystem,
                 () -> gamepad.getButton(GamepadKeys.Button.B),
                 () -> gamepad.getButton(GamepadKeys.Button.X),
                 () -> gamepad1.rumble(500)));
@@ -45,10 +45,10 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
                 gamepad::getLeftY, gamepad::getRightX,
                 () -> gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_UP),
-                () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT),
-                () -> gamepad.getButton(GamepadKeys.Button.DPAD_DOWN),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_LEFT),
-                ManualDriveCommand.FieldOrientation.BLUE,
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_DOWN),
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT),
+                ManualDriveCommand.FieldOrientation.RED,
                 telemetryHandler));
 
         waitForStart();
@@ -59,13 +59,13 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
             }
 
             eTime.reset();
-            scheduler.run();
+            CommandScheduler.getInstance().run();
             double elapsed = eTime.time();
 
             telemetryHandler.addData("Loop time", String.format("%.1f ms", elapsed));
             telemetryHandler.update();
         }
 
-        scheduler.reset();
+        CommandScheduler.getInstance().reset();
     }
 }

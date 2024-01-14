@@ -18,14 +18,15 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 @Config
 public class Elevator extends SubsystemBase {
     public static TrapezoidProfile.Constraints liftConstraints = new TrapezoidProfile.Constraints(2500, 2500);
-    public static PIDCoefficients liftCoefficients = new PIDCoefficients(0.005, 0, 0);
+    public static PIDCoefficients liftCoefficients = new PIDCoefficients(0.006, 0, 0);
     private final ProfiledPIDController liftController = new ProfiledPIDController(
             liftCoefficients.p,
             liftCoefficients.i,
             liftCoefficients.d,
             liftConstraints
     );
-    private DcMotorEx leftMotor, rightMotor;
+    private final DcMotorEx leftMotor;
+    private final DcMotorEx rightMotor;
 
     private final Servo bucketServo;
     private final Servo leftLiftServo;
@@ -87,7 +88,6 @@ public class Elevator extends SubsystemBase {
         backColorSensor = hardwareMap.get(RevColorSensorV3.class, "backColor");
 
         this.telemetryHandler = telemetryHandler;
-        register();
     }
 
     @Override
@@ -152,7 +152,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean isInIntakePosition() {
-        return liftServoState == LiftServoState.INTAKE && liftController.atSetpoint() && !isBucketFull();
+        return liftServoState == LiftServoState.INTAKE && liftController.atSetpoint();
     }
 
     public boolean isInScoringPosition() {

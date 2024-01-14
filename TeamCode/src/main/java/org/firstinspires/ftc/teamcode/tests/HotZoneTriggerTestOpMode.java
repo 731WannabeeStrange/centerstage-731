@@ -42,10 +42,12 @@ public class HotZoneTriggerTestOpMode extends LinearOpMode {
                 .whenInactive(new InstantCommand(intakeSubsystem::stop, intakeSubsystem));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
+                () -> gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_UP),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_DOWN),
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_LEFT),
+                ManualDriveCommand.FieldOrientation.BLUE,
                 telemetryHandler));
 
         waitForStart();

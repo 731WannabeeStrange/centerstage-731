@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.utils.vision
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import com.acmerobotics.dashboard.config.Config
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration
 import org.firstinspires.ftc.vision.VisionProcessor
 import org.opencv.core.Core
@@ -11,12 +12,18 @@ import org.opencv.core.Rect
 import org.opencv.imgproc.Imgproc
 import kotlin.math.roundToInt
 
+@Config
 class TeamPropProcessor : VisionProcessor {
     private var submat = Mat()
     private var hsvMat = Mat()
-    private val rectLeft = Rect(110, 42, 40, 40)
-    private val rectMiddle = Rect(160, 42, 40, 40)
-    private val rectRight = Rect(210, 42, 40, 40)
+    private val rectLeft = Rect(245, 575, 40, 40)
+    private val rectMiddle = Rect(800, 525, 40, 40)
+
+    companion object {
+        @JvmStatic
+        val SAT_THRESHOLD = 50
+    }
+
     var selection = Selected.NONE
         private set
 
@@ -26,11 +33,16 @@ class TeamPropProcessor : VisionProcessor {
 
         val satRectLeft = getAvgSaturation(hsvMat, rectLeft)
         val satRectMiddle = getAvgSaturation(hsvMat, rectMiddle)
-        val satRectRight = getAvgSaturation(hsvMat, rectRight)
 
-        if (satRectLeft > satRectMiddle && satRectLeft > satRectRight) {
+        if (satRectLeft > SAT_THRESHOLD && satRectMiddle > SAT_THRESHOLD) {
+            if (satRectLeft > satRectMiddle) {
+                return Selected.LEFT
+            } else {
+                return Selected.MIDDLE
+            }
+        } else if (satRectLeft > SAT_THRESHOLD) {
             return Selected.LEFT
-        } else if (satRectMiddle > satRectLeft && satRectMiddle > satRectRight) {
+        } else if (satRectMiddle > SAT_THRESHOLD) {
             return Selected.MIDDLE
         }
 
@@ -69,31 +81,27 @@ class TeamPropProcessor : VisionProcessor {
 
         val drawRectangleLeft = makeGraphicsRect(rectLeft, scaleBmpPxToCanvasPx)
         val drawRectangleMiddle = makeGraphicsRect(rectMiddle, scaleBmpPxToCanvasPx)
-        val drawRectangleRight = makeGraphicsRect(rectRight, scaleBmpPxToCanvasPx)
+
         selection = userContext as Selected
         when (selection) {
             Selected.NONE -> {
                 canvas.drawRect(drawRectangleLeft, nonSelectedPaint)
                 canvas.drawRect(drawRectangleMiddle, nonSelectedPaint)
-                canvas.drawRect(drawRectangleRight, nonSelectedPaint)
             }
 
             Selected.LEFT -> {
                 canvas.drawRect(drawRectangleLeft, selectedPaint)
                 canvas.drawRect(drawRectangleMiddle, nonSelectedPaint)
-                canvas.drawRect(drawRectangleRight, nonSelectedPaint)
             }
 
             Selected.MIDDLE -> {
                 canvas.drawRect(drawRectangleLeft, nonSelectedPaint)
                 canvas.drawRect(drawRectangleMiddle, selectedPaint)
-                canvas.drawRect(drawRectangleRight, nonSelectedPaint)
             }
 
             Selected.RIGHT -> {
                 canvas.drawRect(drawRectangleLeft, nonSelectedPaint)
                 canvas.drawRect(drawRectangleMiddle, nonSelectedPaint)
-                canvas.drawRect(drawRectangleRight, selectedPaint)
             }
         }
     }

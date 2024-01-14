@@ -36,7 +36,6 @@ import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
 import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
 import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
-import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
@@ -90,15 +89,15 @@ public class MecanumDrive extends SubsystemBase {
                 PARAMS.logoFacingDirection,
                 PARAMS.usbFacingDirection));
         imu.initialize(parameters);
+        imu.resetYaw();
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        localizer = new AbsoluteLocalizer(new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick), startPose);
+        localizer = new AbsoluteLocalizer(new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick), startPose);
         // two-wheel for now so we can have heading without tuned odo
         //localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick, startPose);
 
         this.telemetryHandler = telemetryHandler;
-        register();
     }
 
     public static void drawRobot(Canvas c, Pose2d t) {
@@ -442,7 +441,7 @@ public class MecanumDrive extends SubsystemBase {
         // drive model parameters
         public double inPerTick = 0.00052843826;
         public double lateralInPerTick = 1;
-        public double trackWidthTicks = 24733.9387697964;
+        public double trackWidthTicks = 24536.74597480491;
 
         // feedforward parameters (in tick units)
         public double kS = 1.358108949318399;

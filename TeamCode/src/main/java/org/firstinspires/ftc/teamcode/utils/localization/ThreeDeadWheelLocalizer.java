@@ -12,15 +12,14 @@ import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
 public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
     public static class Params {
-        public double par0YTicks = 7915.166024327065; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = -7641.352628822782; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = 7592.816187212765; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = 8144.3190903693585; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = -7352.5865316061445; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = 7576.15139617889; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();

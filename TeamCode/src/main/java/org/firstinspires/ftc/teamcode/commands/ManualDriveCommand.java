@@ -15,26 +15,37 @@ import java.util.function.DoubleSupplier;
 @Config
 public class ManualDriveCommand extends CommandBase {
 
-    public static double P = 0.03;
+    public static double P = 0.02;
+    public static double SLOW_MODE_FACTOR = 4;
     private final MecanumDrive drive;
     private final DoubleSupplier strafe, forward, rotation;
-    private final BooleanSupplier autoTurn0, autoTurn90, autoTurn180, autoTurn270;
+    private final BooleanSupplier slowMode, autoTurnUp, autoTurnLeft, autoTurnDown, autoTurnRight;
     private final TelemetryHandler telemetryHandler;
     private TurnState turnState = TurnState.DRIVER;
     private double desiredAngle = 0;
 
+    public enum FieldOrientation {
+        BLUE,
+        RED
+    }
+
+    private final FieldOrientation fieldOrientation;
+
     public ManualDriveCommand(MecanumDrive drive, DoubleSupplier strafe, DoubleSupplier forward,
-                              DoubleSupplier rotation, BooleanSupplier autoTurn0,
-                              BooleanSupplier autoTurn90, BooleanSupplier autoTurn180,
-                              BooleanSupplier autoTurn270, TelemetryHandler telemetryHandler) {
+                              DoubleSupplier rotation, BooleanSupplier slowMode,
+                              BooleanSupplier autoTurnUp, BooleanSupplier autoTurnLeft,
+                              BooleanSupplier autoTurnDown, BooleanSupplier autoTurnRight,
+                              FieldOrientation fieldOrientation, TelemetryHandler telemetryHandler) {
         this.drive = drive;
         this.strafe = strafe;
         this.forward = forward;
         this.rotation = rotation;
-        this.autoTurn0 = autoTurn0;
-        this.autoTurn90 = autoTurn90;
-        this.autoTurn180 = autoTurn180;
-        this.autoTurn270 = autoTurn270;
+        this.slowMode = slowMode;
+        this.autoTurnUp = autoTurnUp;
+        this.autoTurnLeft = autoTurnLeft;
+        this.autoTurnDown = autoTurnDown;
+        this.autoTurnRight = autoTurnRight;
+        this.fieldOrientation = fieldOrientation;
         this.telemetryHandler = telemetryHandler;
         addRequirements(drive);
     }
@@ -42,38 +53,37 @@ public class ManualDriveCommand extends CommandBase {
     @Override
     public void execute() {
         Rotation2d currentHeading = drive.getPose().heading;
-        Vector2d input = currentHeading.times(
-                new Vector2d(-forward.getAsDouble(), -strafe.getAsDouble())
+        switch (fieldOrientation) {
+            case BLUE:
+                currentHeading = currentHeading.plus(Math.PI / 2);
+                break;
+            case RED:
+                currentHeading = currentHeading.plus(-Math.PI / 2);
+                break;
+        }
+        Vector2d input = currentHeading.inverse().times(
+                new Vector2d(forward.getAsDouble(), -strafe.getAsDouble())
         );
 
+        if (autoTurnUp.getAsBoolean()) {
+            desiredAngle = 0;
+            turnState = TurnState.AUTO;
+        } else if (autoTurnDown.getAsBoolean()) {
+            desiredAngle = 180;
+            turnState = TurnState.AUTO;
+        } else if (autoTurnLeft.getAsBoolean()) {
+            desiredAngle = 90;
+            turnState = TurnState.AUTO;
+        } else if (autoTurnRight.getAsBoolean()) {
+            desiredAngle = 270;
+            turnState = TurnState.AUTO;
+        }
         PoseVelocity2d powers;
         switch (turnState) {
             case DRIVER:
-                powers = new PoseVelocity2d(input, rotation.getAsDouble());
-                if (autoTurn0.getAsBoolean()) {
-                    desiredAngle = 0;
-                    turnState = TurnState.AUTO;
-                } else if (autoTurn180.getAsBoolean()) {
-                    desiredAngle = 180;
-                    turnState = TurnState.AUTO;
-                } else if (autoTurn90.getAsBoolean()) {
-                    desiredAngle = -90;
-                    turnState = TurnState.AUTO;
-                } else if (autoTurn270.getAsBoolean()) {
-                    desiredAngle = 90;
-                    turnState = TurnState.AUTO;
-                }
+                powers = new PoseVelocity2d(input, -rotation.getAsDouble());
                 break;
             case AUTO:
-                if (autoTurn0.getAsBoolean()) {
-                    desiredAngle = 0;
-                } else if (autoTurn180.getAsBoolean()) {
-                    desiredAngle = 180;
-                } else if (autoTurn90.getAsBoolean()) {
-                    desiredAngle = -90;
-                } else if (autoTurn270.getAsBoolean()) {
-                    desiredAngle = 90;
-                }
                 double error = desiredAngle - Math.toDegrees(currentHeading.toDouble());
                 if (error > 180) {
                     error -= 360;
@@ -82,13 +92,17 @@ public class ManualDriveCommand extends CommandBase {
                 }
                 telemetryHandler.addData("desired angle", desiredAngle);
                 telemetryHandler.addData("turn error", error);
-                powers = new PoseVelocity2d(input, P * -error);
+                powers = new PoseVelocity2d(input, P * error);
                 if (rotation.getAsDouble() != 0) {
                     turnState = TurnState.DRIVER;
                 }
                 break;
             default:
                 throw new RuntimeException("weird turn state");
+        }
+
+        if (slowMode.getAsBoolean()) {
+            powers = new PoseVelocity2d(powers.linearVel.div(SLOW_MODE_FACTOR), powers.angVel / SLOW_MODE_FACTOR);
         }
 
         drive.setDrivePowers(powers);

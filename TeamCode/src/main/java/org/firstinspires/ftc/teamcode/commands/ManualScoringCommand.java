@@ -11,16 +11,19 @@ import java.util.function.BooleanSupplier;
 
 @Config
 public class ManualScoringCommand extends CommandBase {
-    private Intake intakeSubsystem;
-    private Elevator elevatorSubsystem;
-    private BooleanSupplier g1b;
-    private ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+    private final Intake intakeSubsystem;
+    private final Elevator elevatorSubsystem;
+    private final BooleanSupplier g1b;
+    private final BooleanSupplier g1x;
+    private final Runnable rumbler;
+    private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
     public static double RELEASE_FIRST_TIME = 0.75;
     public static double RELEASE_SECOND_TIME = 0.75;
 
     private enum ScoringState {
         INTAKING,
+        BUCKET_FULL_WARNING,
         WAITING_FOR_SCORE,
         ELEVATING,
         SCORING_FIRST,
@@ -32,10 +35,12 @@ public class ManualScoringCommand extends CommandBase {
     }
     private ScoringState scoringState = ScoringState.INTAKING;
 
-    public ManualScoringCommand(Intake intakeSubsystem, Elevator elevatorSubsystem, BooleanSupplier g1b) {
+    public ManualScoringCommand(Intake intakeSubsystem, Elevator elevatorSubsystem, BooleanSupplier g1b, BooleanSupplier g1x, Runnable rumbler) {
         this.intakeSubsystem = intakeSubsystem;
         this.elevatorSubsystem = elevatorSubsystem;
         this.g1b = g1b;
+        this.g1x = g1x;
+        this.rumbler = rumbler;
 
         addRequirements(intakeSubsystem, elevatorSubsystem);
     }
@@ -45,9 +50,14 @@ public class ManualScoringCommand extends CommandBase {
         switch (scoringState) {
             case IDLE:
                 if (g1b.getAsBoolean()) {
-                    intakeSubsystem.start();
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.INTAKE);
-                    scoringState = ScoringState.INTAKING;
+                    if (elevatorSubsystem.isBucketFull()) {
+                        rumbler.run();
+                        scoringState = ScoringState.BUCKET_FULL_WARNING;
+                    } else {
+                        intakeSubsystem.start();
+                        elevatorSubsystem.setWheelState(Elevator.WheelState.INTAKE);
+                        scoringState = ScoringState.INTAKING;
+                    }
                 }
                 break;
             case INTAKING:
@@ -64,6 +74,11 @@ public class ManualScoringCommand extends CommandBase {
                     }
                 }
                 break;
+            case BUCKET_FULL_WARNING:
+                if (!g1b.getAsBoolean()) {
+                    scoringState = ScoringState.WAITING_FOR_SCORE;
+                }
+                break;
             case WAITING_FOR_SCORE:
                 if (g1b.getAsBoolean()) {
                     elevatorSubsystem.goToMaxScoringPos();
@@ -74,12 +89,20 @@ public class ManualScoringCommand extends CommandBase {
                 if (elevatorSubsystem.isInScoringPosition()) {
                     scoringState = ScoringState.SCORING_FIRST;
                 }
+                if (g1x.getAsBoolean()) {
+                    elevatorSubsystem.goToIdlePose();
+                    scoringState = ScoringState.RESETTING;
+                }
                 break;
             case SCORING_FIRST:
                 if (g1b.getAsBoolean()) {
                     elevatorSubsystem.setWheelState(Elevator.WheelState.OUTTAKE);
                     scoringState = ScoringState.RELEASING_FIRST;
                     eTime.reset();
+                }
+                if (g1x.getAsBoolean()) {
+                    elevatorSubsystem.goToIdlePose();
+                    scoringState = ScoringState.RESETTING;
                 }
                 break;
             case RELEASING_FIRST:
