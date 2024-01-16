@@ -13,15 +13,17 @@ import java.util.function.BooleanSupplier;
 public class ManualScoringCommand extends CommandBase {
     private final Intake intakeSubsystem;
     private final Elevator elevatorSubsystem;
-    private final BooleanSupplier g1b;
-    private final BooleanSupplier g1x;
+    private final BooleanSupplier g1b, g1x, g1y, g1rb;
     private final Runnable rumbler;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
-    public static double RELEASE_FIRST_TIME = 0.75;
+    public static double RELEASE_FIRST_TIME = 0.6;
     public static double RELEASE_SECOND_TIME = 0.75;
 
     private enum ScoringState {
+        LIFTING,
+        LIFTED,
+        DROPPING,
         INTAKING,
         BUCKET_FULL_WARNING,
         WAITING_FOR_SCORE,
@@ -35,11 +37,13 @@ public class ManualScoringCommand extends CommandBase {
     }
     private ScoringState scoringState = ScoringState.INTAKING;
 
-    public ManualScoringCommand(Intake intakeSubsystem, Elevator elevatorSubsystem, BooleanSupplier g1b, BooleanSupplier g1x, Runnable rumbler) {
+    public ManualScoringCommand(Intake intakeSubsystem, Elevator elevatorSubsystem, BooleanSupplier g1b, BooleanSupplier g1x, BooleanSupplier g1y, BooleanSupplier g1rb, Runnable rumbler) {
         this.intakeSubsystem = intakeSubsystem;
         this.elevatorSubsystem = elevatorSubsystem;
         this.g1b = g1b;
         this.g1x = g1x;
+        this.g1y = g1y;
+        this.g1rb = g1rb;
         this.rumbler = rumbler;
 
         addRequirements(intakeSubsystem, elevatorSubsystem);
@@ -58,6 +62,26 @@ public class ManualScoringCommand extends CommandBase {
                         elevatorSubsystem.setWheelState(Elevator.WheelState.INTAKE);
                         scoringState = ScoringState.INTAKING;
                     }
+                }
+                if (g1rb.getAsBoolean() && g1y.getAsBoolean()) {
+                    elevatorSubsystem.sendLiftUp();
+                    scoringState = ScoringState.LIFTING;
+                }
+                break;
+            case LIFTING:
+                if (elevatorSubsystem.isLiftUp()) {
+                    scoringState = ScoringState.LIFTED;
+                }
+                break;
+            case LIFTED:
+                if (g1rb.getAsBoolean()) {
+                    elevatorSubsystem.sendLiftDown();
+                    scoringState = ScoringState.DROPPING;
+                }
+                break;
+            case DROPPING:
+                if (elevatorSubsystem.isInIntakePosition()) {
+                    scoringState = ScoringState.IDLE;
                 }
                 break;
             case INTAKING:
@@ -81,7 +105,7 @@ public class ManualScoringCommand extends CommandBase {
                 break;
             case WAITING_FOR_SCORE:
                 if (g1b.getAsBoolean()) {
-                    elevatorSubsystem.goToMaxScoringPos();
+                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.MAXIMUM);
                     scoringState = ScoringState.ELEVATING;
                 }
                 break;
@@ -90,7 +114,7 @@ public class ManualScoringCommand extends CommandBase {
                     scoringState = ScoringState.SCORING_FIRST;
                 }
                 if (g1x.getAsBoolean()) {
-                    elevatorSubsystem.goToIdlePose();
+                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
@@ -101,7 +125,7 @@ public class ManualScoringCommand extends CommandBase {
                     eTime.reset();
                 }
                 if (g1x.getAsBoolean()) {
-                    elevatorSubsystem.goToIdlePose();
+                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
@@ -121,7 +145,7 @@ public class ManualScoringCommand extends CommandBase {
             case RELEASING_SECOND:
                 if (eTime.time() > RELEASE_SECOND_TIME) {
                     elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
-                    elevatorSubsystem.goToIdlePose();
+                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
                     scoringState = ScoringState.RESETTING;
                 }
                 break;

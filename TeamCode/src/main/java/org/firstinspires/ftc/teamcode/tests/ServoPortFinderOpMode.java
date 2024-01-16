@@ -12,7 +12,7 @@ public class ServoPortFinderOpMode extends LinearOpMode {
     public static double POSITION = 0.5;
     @Override
     public void runOpMode() throws InterruptedException {
-        Servo mysteryServo = hardwareMap.get(Servo.class, "leftLift");
+        Servo mysteryServo = hardwareMap.get(Servo.class, "bucket");
 
         waitForStart();
 

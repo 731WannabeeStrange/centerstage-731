@@ -14,8 +14,8 @@ import org.firstinspires.ftc.teamcode.utils.caching.CachingServo;
 @Config
 public class Intake extends SubsystemBase {
     public static double intakeMotorPower = 0.8;
-    public static double intakeServoRightUpPosition = 0.25;
-    public static double intakeServoLeftUpPosition = 0.22;
+    public static double intakeServoRightUpPosition = 0.16;
+    public static double intakeServoLeftUpPosition = 0.24;
     public static double intakeServoDownOffset = 0.43;
     private final DcMotorEx intakeMotor;
     private final Servo rightServo;

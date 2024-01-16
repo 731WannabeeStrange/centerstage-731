@@ -26,12 +26,13 @@ public class LiftTestOpMode extends LinearOpMode {
         //        .whenInactive(new InstantCommand(() -> elevatorSubsystem.setLiftState(Elevator.LiftState.INTAKE), elevatorSubsystem));
         //liftSubsystem.setDefaultCommand(new PerpetualCommand(new InstantCommand(() -> liftSubsystem.setLiftState(Lift.LiftState.INTAKE), liftSubsystem)));
 
+
         gamepad.getGamepadButton(GamepadKeys.Button.Y)
-                .whenActive(new InstantCommand(() -> elevatorSubsystem.goToMaxScoringPos(), elevatorSubsystem));
+                .whenActive(new InstantCommand(() -> elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.MAXIMUM), elevatorSubsystem));
         gamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenActive(new InstantCommand(() -> elevatorSubsystem.goToIdlePose(), elevatorSubsystem));
+                .whenActive(new InstantCommand(() -> elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE), elevatorSubsystem));
         gamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenActive(new InstantCommand(() -> elevatorSubsystem.goToMinScoringPos(), elevatorSubsystem));
+                .whenActive(new InstantCommand(() -> elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.MINIMUM), elevatorSubsystem));
         waitForStart();
 
         while (opModeIsActive() && !isStopRequested()) {

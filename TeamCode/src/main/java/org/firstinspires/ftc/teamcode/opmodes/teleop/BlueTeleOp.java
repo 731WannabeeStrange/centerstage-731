@@ -33,8 +33,7 @@ public class BlueTeleOp extends LinearOpMode {
 
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
 
-        Pose2d storedPose = PoseStorage.currentPose;
-        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, storedPose, telemetryHandler);
+        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
         Intake intakeSubsystem = new Intake(hardwareMap, telemetryHandler);
         Elevator elevatorSubsystem = new Elevator(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
@@ -42,6 +41,8 @@ public class BlueTeleOp extends LinearOpMode {
         CommandScheduler.getInstance().schedule(new ManualScoringCommand(intakeSubsystem, elevatorSubsystem,
                 () -> gamepad.getButton(GamepadKeys.Button.B),
                 () -> gamepad.getButton(GamepadKeys.Button.X),
+                () -> gamepad.getButton(GamepadKeys.Button.Y),
+                () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER),
                 () -> gamepad1.rumble(500)));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
@@ -64,12 +65,10 @@ public class BlueTeleOp extends LinearOpMode {
             CommandScheduler.getInstance().run();
             double elapsed = eTime.time();
 
-            telemetryHandler.addData("Stored pose", storedPose);
             telemetryHandler.addData("Loop time", String.format("%.1f ms", elapsed));
             telemetryHandler.update();
         }
 
         CommandScheduler.getInstance().reset();
-        PoseStorage.invalidateStorage();
     }
 }

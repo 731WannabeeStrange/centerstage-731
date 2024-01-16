@@ -40,6 +40,8 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
         scheduler.schedule(new ManualScoringCommand(intakeSubsystem, elevatorSubsystem,
                 () -> gamepad.getButton(GamepadKeys.Button.B),
                 () -> gamepad.getButton(GamepadKeys.Button.X),
+                () -> gamepad.getButton(GamepadKeys.Button.Y),
+                () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER),
                 () -> gamepad1.rumble(500)));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
