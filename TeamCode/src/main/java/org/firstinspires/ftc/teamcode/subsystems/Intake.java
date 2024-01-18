@@ -27,7 +27,6 @@ public class Intake extends SubsystemBase {
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        // might change names in config
         rightServo = new CachingServo(hardwareMap.get(Servo.class, "rightIntake"));
         leftServo = new CachingServo(hardwareMap.get(Servo.class, "leftIntake"));
 

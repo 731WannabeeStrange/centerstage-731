@@ -3,13 +3,13 @@ package org.firstinspires.ftc.teamcode.commands;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
 
 @Config
 public class IntakePixelsCommand extends CommandBase {
-    private Intake intakeSubsystem;
-    private Elevator elevatorSubsystem;
+    private final Intake intakeSubsystem;
+    private final Elevator elevatorSubsystem;
 
     public IntakePixelsCommand(Intake intakeSubsystem, Elevator elevatorSubsystem) {
         this.intakeSubsystem = intakeSubsystem;

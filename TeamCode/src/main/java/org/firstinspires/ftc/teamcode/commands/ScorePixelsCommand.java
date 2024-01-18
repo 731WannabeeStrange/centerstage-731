@@ -4,14 +4,13 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
 
 @Config
 public class ScorePixelsCommand extends CommandBase {
-    private Elevator elevatorSubsystem;
-    private Elevator.ElevatorState elevatorState;
-    private ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+    private final Elevator elevatorSubsystem;
+    private final Elevator.ElevatorState elevatorState;
+    private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
     private enum ScoreState {
         GOING_UP,

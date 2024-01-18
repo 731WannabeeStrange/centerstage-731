@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.subsystems.old;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
@@ -41,9 +41,13 @@ public class Elevator extends SubsystemBase {
     public static double MIN_SCORING_POS = 800;
     public static double LIFT_UP_POS = 1600;
     public static double MAX_SCORING_POS = 2000;
+    public static double SERVO_THRESHOLD = 400;
 
     private double currentTarget = IDLE_POS;
 
+    public static double TRANSIT_OFFSET = 0.055;
+    public static double BUCKET_TRANSIT_OFFSET = -0.01;
+    public static double MOTOR_TRANSIT_THRESHOLD = 15;
     public static double INTAKE_RIGHT_LIFT_POSITION = 0.75;
     public static double INTAKE_LEFT_LIFT_POSITION = 0.11;
     public static double INTAKE_BUCKET_POSITION = 0.34;
@@ -55,15 +59,19 @@ public class Elevator extends SubsystemBase {
     public static double LIFT_BUCKET_POSITION = 0.61;
     public static double WHEEL_POWER = 1;
 
+    public enum LiftServoState {
+        TRANSIT,
+        INTAKE,
+        OUTTAKE
+    }
+
+    private LiftServoState liftServoState = LiftServoState.INTAKE;
+    private boolean liftServoDisabled = false;
+
     public enum WheelState {
         INTAKE,
         OUTTAKE,
         STOPPED
-    }
-
-    public enum LiftServoState {
-        INTAKE,
-        OUTTAKE
     }
 
     public enum ElevatorState {
@@ -111,6 +119,34 @@ public class Elevator extends SubsystemBase {
         rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
         leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
 
+        if (!liftServoDisabled) {
+            switch (liftServoState) {
+                case TRANSIT:
+                    rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION + TRANSIT_OFFSET);
+                    leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION - TRANSIT_OFFSET);
+                    bucketServo.setPosition(INTAKE_BUCKET_POSITION - BUCKET_TRANSIT_OFFSET);
+
+                    if (rightMotor.getCurrentPosition() <= MOTOR_TRANSIT_THRESHOLD || leftMotor.getCurrentPosition() <= MOTOR_TRANSIT_THRESHOLD) {
+                        liftServoState = LiftServoState.INTAKE;
+                    }
+                    break;
+                case INTAKE:
+                    rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION);
+                    leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION);
+                    bucketServo.setPosition(INTAKE_BUCKET_POSITION);
+
+                    if ((rightMotor.getCurrentPosition() >= SERVO_THRESHOLD || leftMotor.getCurrentPosition() >= SERVO_THRESHOLD) && (currentTarget != IDLE_POS)) {
+                        liftServoState = LiftServoState.OUTTAKE;
+                    }
+                    break;
+                case OUTTAKE:
+                    rightLiftServo.setPosition(OUTTAKE_RIGHT_LIFT_POSITION);
+                    leftLiftServo.setPosition(OUTTAKE_LEFT_LIFT_POSITION);
+                    bucketServo.setPosition(OUTTAKE_BUCKET_POSITION);
+                    break;
+            }
+        }
+
         telemetryHandler.addData("front color distance (in)", frontColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("back color distance (in)", backColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("right outtake position", rightMotor.getCurrentPosition());
@@ -121,12 +157,11 @@ public class Elevator extends SubsystemBase {
         switch (elevatorState) {
             case IDLE:
                 currentTarget = IDLE_POS;
-                setLiftServoState(LiftServoState.INTAKE);
+                liftServoState = LiftServoState.TRANSIT;
                 break;
             case LIFT_DOWN:
                 currentTarget = LIFT_DOWN_POS;
-                setLiftServoState(LiftServoState.INTAKE);
-                break;
+                liftServoState = LiftServoState.TRANSIT;
             case MINIMUM:
                 currentTarget = MIN_SCORING_POS;
                 break;
@@ -138,21 +173,6 @@ public class Elevator extends SubsystemBase {
                 break;
         }
         this.elevatorState = elevatorState;
-    }
-
-    public void setLiftServoState(LiftServoState liftServoState) {
-        switch (liftServoState) {
-            case INTAKE:
-                rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION);
-                leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION);
-                bucketServo.setPosition(INTAKE_BUCKET_POSITION);
-                break;
-            case OUTTAKE:
-                rightLiftServo.setPosition(OUTTAKE_RIGHT_LIFT_POSITION);
-                leftLiftServo.setPosition(OUTTAKE_LEFT_LIFT_POSITION);
-                bucketServo.setPosition(OUTTAKE_BUCKET_POSITION);
-                break;
-        }
     }
 
     public void setWheelState(WheelState wheelState) {
@@ -177,28 +197,20 @@ public class Elevator extends SubsystemBase {
         return backColorSensor.getDistance(DistanceUnit.INCH);
     }
 
-    public double getElevatorHeight() {
-        return rightMotor.getCurrentPosition();
-    }
-
     public boolean isBucketFull() {
         return getFrontColor() < 1.0 && getBackColor() < 0.5;
     }
 
     public boolean isInIntakePosition() {
-        return elevatorState == ElevatorState.IDLE && liftController.atSetpoint();
+        return liftServoState == LiftServoState.INTAKE && elevatorState == ElevatorState.IDLE && liftController.atSetpoint();
     }
 
     public boolean isInScoringPosition() {
-        return (elevatorState == ElevatorState.MINIMUM || elevatorState == ElevatorState.MAXIMUM) && liftController.atSetpoint();
+        return liftServoState == LiftServoState.OUTTAKE && elevatorState != ElevatorState.IDLE && liftController.atSetpoint();
     }
 
     public boolean isLiftUp() {
-        return elevatorState == ElevatorState.LIFT_UP && liftController.atSetpoint();
-    }
-
-    public boolean isElevatorBusy() {
-        return !liftController.atSetpoint();
+        return liftServoDisabled && elevatorState == ElevatorState.LIFT_UP && liftController.atSetpoint();
     }
 
     public void sendLiftUp() {
@@ -206,9 +218,11 @@ public class Elevator extends SubsystemBase {
         rightLiftServo.setPosition(LIFT_RIGHT_LIFT_POSITION);
         leftLiftServo.setPosition(LIFT_LEFT_LIFT_POSITION);
         bucketServo.setPosition(LIFT_BUCKET_POSITION);
+        liftServoDisabled = true;
     }
 
     public void sendLiftDown() {
         setElevatorHeight(ElevatorState.IDLE);
+        liftServoDisabled = false;
     }
 }

@@ -2,10 +2,10 @@ package org.firstinspires.ftc.teamcode.commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
 
 public class ResetElevatorCommand extends CommandBase {
-    private Elevator elevatorSubsystem;
+    private final Elevator elevatorSubsystem;
     public ResetElevatorCommand(Elevator elevatorSubsystem) {
         this.elevatorSubsystem = elevatorSubsystem;
 
