@@ -67,6 +67,7 @@ public class ScoringMech extends SubsystemBase {
         OUTTAKE,
         LIFT
     }
+    private LiftServoState liftServoState = LiftServoState.INTAKE;
 
     public ScoringMech(HardwareMap hardwareMap, TelemetryHandler telemetryHandler) {
         liftController.setTolerance(20);
@@ -122,6 +123,7 @@ public class ScoringMech extends SubsystemBase {
 
         telemetryHandler.addData("front color distance (in)", frontColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("back color distance (in)", backColorSensor.getDistance(DistanceUnit.INCH));
+        telemetryHandler.addData("num pixels in bucket", getNumPixelsInBucket());
         telemetryHandler.addData("right outtake position", rightMotor.getCurrentPosition());
         telemetryHandler.addData("left outtake position", leftMotor.getCurrentPosition());
 
@@ -152,6 +154,7 @@ public class ScoringMech extends SubsystemBase {
                 bucketServo.setPosition(LIFT_BUCKET_POSITION);
                 break;
         }
+        this.liftServoState = liftServoState;
     }
 
     public void setWheelState(WheelState wheelState) {
@@ -198,6 +201,10 @@ public class ScoringMech extends SubsystemBase {
         } else {
             return 0;
         }
+    }
+
+    public LiftServoState getLiftServoState() {
+        return liftServoState;
     }
 
     public boolean canLiftServosExtend() {

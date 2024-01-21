@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
-import org.firstinspires.ftc.teamcode.commands.ManualHangCommand;
 import org.firstinspires.ftc.teamcode.commands.ManualScoringCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
@@ -41,8 +40,10 @@ public class BlueTeleOp extends LinearOpMode {
         scoringMechSubsystem.setDefaultCommand(new ManualScoringCommand(scoringMechSubsystem,
                 () -> gamepad.getButton(GamepadKeys.Button.B),
                 () -> gamepad.getButton(GamepadKeys.Button.Y),
+                () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER),
+                () -> gamepad.getButton(GamepadKeys.Button.A),
                 () -> gamepad.getButton(GamepadKeys.Button.X),
-                rumbler));
+                rumbler, telemetryHandler));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
                 () -> gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER),
@@ -52,12 +53,6 @@ public class BlueTeleOp extends LinearOpMode {
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT),
                 ManualDriveCommand.FieldOrientation.BLUE,
                 telemetryHandler));
-
-        gamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenActive(new ManualHangCommand(
-                        scoringMechSubsystem,
-                        () -> gamepad.getButton(GamepadKeys.Button.X)
-                ));
 
         waitForStart();
 

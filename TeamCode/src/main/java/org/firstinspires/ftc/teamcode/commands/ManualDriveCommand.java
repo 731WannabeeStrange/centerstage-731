@@ -14,9 +14,9 @@ import java.util.function.DoubleSupplier;
 
 @Config
 public class ManualDriveCommand extends CommandBase {
-
     public static double P = 0.02;
     public static double SLOW_MODE_FACTOR = 4;
+
     private final MecanumDrive drive;
     private final DoubleSupplier strafe, forward, rotation;
     private final BooleanSupplier slowMode, autoTurnUp, autoTurnLeft, autoTurnDown, autoTurnRight;
@@ -28,7 +28,6 @@ public class ManualDriveCommand extends CommandBase {
         BLUE,
         RED
     }
-
     private final FieldOrientation fieldOrientation;
 
     public ManualDriveCommand(MecanumDrive drive, DoubleSupplier strafe, DoubleSupplier forward,

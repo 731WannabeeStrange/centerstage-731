@@ -5,37 +5,54 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
+import org.firstinspires.ftc.teamcode.utils.RangeController;
 import org.firstinspires.ftc.teamcode.utils.Rumbler;
+import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.function.BooleanSupplier;
 
 @Config
 public class ManualScoringCommand extends CommandBase {
+    public static double RELEASE_TIME = 0.6;
+    public static double LIFT_FRACTION = 0.8;
+    public static double SCORING_INCREMENT = 0.03;
+    public static double MAX_SCORING_FRACTION = 1.0;
+    public static double MIN_SCORING_FRACTION = 0.5;
+
     private final ScoringMech scoringMechSubsystem;
-    private final BooleanSupplier intakeButton, scoreButton, cancelButton;
+    private final BooleanSupplier intakeButton, scoreButton, hangButton, downButton, cancelButton;
     private final Rumbler rumbler;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
-    public static double RELEASE_TIME = 0.6;
+    private double lastScoringPosition = 0.8;
+    private boolean oldUpButton = false;
+    private boolean oldDownButton = false;
 
     private enum ScoringState {
         IDLE,
         INTAKING,
-        ELEVATING,
         SCORING,
         RELEASING,
+        HANGING,
         RESETTING
     }
+
     private ScoringState scoringState = ScoringState.INTAKING;
 
+    private final TelemetryHandler telemetryHandler;
+
     public ManualScoringCommand(ScoringMech scoringMechSubsystem, BooleanSupplier intakeButton,
-                                BooleanSupplier scoreButton, BooleanSupplier cancelButton,
-                                Rumbler rumbler) {
+                                BooleanSupplier scoreButton, BooleanSupplier hangButton,
+                                BooleanSupplier downButton, BooleanSupplier cancelButton,
+                                Rumbler rumbler, TelemetryHandler telemetryHandler) {
         this.scoringMechSubsystem = scoringMechSubsystem;
         this.intakeButton = intakeButton;
         this.scoreButton = scoreButton;
+        this.hangButton = hangButton;
+        this.downButton = downButton;
         this.cancelButton = cancelButton;
         this.rumbler = rumbler;
+        this.telemetryHandler = telemetryHandler;
 
         addRequirements(scoringMechSubsystem);
     }
@@ -54,8 +71,13 @@ public class ManualScoringCommand extends CommandBase {
                     }
                 }
                 if (scoreButton.getAsBoolean() && scoringMechSubsystem.getNumPixelsInBucket() > 0) {
-                    scoringMechSubsystem.setElevatorHeight(0.8);
-                    scoringState = ScoringState.ELEVATING;
+                    scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
+                    scoringState = ScoringState.SCORING;
+                }
+                if (hangButton.getAsBoolean()) {
+                    scoringMechSubsystem.setElevatorHeight(LIFT_FRACTION);
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
+                    scoringState = ScoringState.HANGING;
                 }
                 break;
             case INTAKING:
@@ -65,25 +87,36 @@ public class ManualScoringCommand extends CommandBase {
                     scoringState = ScoringState.IDLE;
                 }
                 break;
-            case ELEVATING:
-                if (!scoringMechSubsystem.isElevatorBusy()) {
-                    scoringState = ScoringState.SCORING;
-                }
-                if (cancelButton.getAsBoolean()) {
-                    scoringMechSubsystem.setElevatorHeight(0);
-                    scoringState = ScoringState.RESETTING;
-                }
-                break;
             case SCORING:
-                if (scoreButton.getAsBoolean()) {
+                if (scoringMechSubsystem.getLiftServoState() != ScoringMech.LiftServoState.OUTTAKE && scoringMechSubsystem.canLiftServosExtend()) {
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
+                }
+
+                if (scoreButton.getAsBoolean() && !scoringMechSubsystem.isElevatorBusy()) {
+                    oldUpButton = false;
+                    oldDownButton = false;
+
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.OUTTAKE);
                     scoringState = ScoringState.RELEASING;
                     eTime.reset();
                 }
+
+                if (intakeButton.getAsBoolean() && !oldUpButton) {
+                    lastScoringPosition += SCORING_INCREMENT;
+                }
+                if (downButton.getAsBoolean() && !oldDownButton) {
+                    lastScoringPosition -= SCORING_INCREMENT;
+                }
+                lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_FRACTION, MAX_SCORING_FRACTION);
+                scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
+                oldUpButton = intakeButton.getAsBoolean();
+                oldDownButton = downButton.getAsBoolean();
+
                 if (cancelButton.getAsBoolean()) {
                     scoringMechSubsystem.setElevatorHeight(0);
                     scoringState = ScoringState.RESETTING;
                 }
+
                 break;
             case RELEASING:
                 if (eTime.time() > RELEASE_TIME) {
@@ -97,11 +130,22 @@ public class ManualScoringCommand extends CommandBase {
                     }
                 }
                 break;
+            case HANGING:
+                if (scoringMechSubsystem.getLiftServoState() != ScoringMech.LiftServoState.LIFT && scoringMechSubsystem.canLiftServosExtend()) {
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
+                }
+                if (hangButton.getAsBoolean() && !scoringMechSubsystem.isElevatorBusy()) {
+                    scoringMechSubsystem.setElevatorHeight(0);
+                    scoringState = ScoringState.RESETTING;
+                }
+                break;
             case RESETTING:
                 if (!scoringMechSubsystem.isElevatorBusy()) {
                     scoringState = ScoringState.IDLE;
                 }
                 break;
         }
+
+        telemetryHandler.addData("scoring state", scoringState);
     }
 }
