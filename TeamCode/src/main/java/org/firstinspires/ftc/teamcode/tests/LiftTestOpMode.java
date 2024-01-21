@@ -7,7 +7,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 @TeleOp(group = "test")
@@ -17,7 +17,7 @@ public class LiftTestOpMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Elevator elevatorSubsystem = new Elevator(hardwareMap, telemetryHandler);
+        ScoringMech scoringMechSubsystem = new ScoringMech(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
 
         // fix with default commands
@@ -28,11 +28,11 @@ public class LiftTestOpMode extends LinearOpMode {
 
 
         gamepad.getGamepadButton(GamepadKeys.Button.Y)
-                .whenActive(new InstantCommand(() -> elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.MAXIMUM), elevatorSubsystem));
+                .whenActive(new InstantCommand(() -> scoringMechSubsystem.setElevatorHeight(1), scoringMechSubsystem));
         gamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenActive(new InstantCommand(() -> elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE), elevatorSubsystem));
+                .whenActive(new InstantCommand(() -> scoringMechSubsystem.setElevatorHeight(0), scoringMechSubsystem));
         gamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenActive(new InstantCommand(() -> elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.MINIMUM), elevatorSubsystem));
+                .whenActive(new InstantCommand(() -> scoringMechSubsystem.setElevatorHeight(0.5), scoringMechSubsystem));
         waitForStart();
 
         while (opModeIsActive() && !isStopRequested()) {

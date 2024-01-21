@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.tests;
 
 import com.acmerobotics.roadrunner.Pose2d;
@@ -10,8 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
-import org.firstinspires.ftc.teamcode.commands.old.ManualScoringCommand;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.commands.ManualScoringCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
@@ -71,3 +71,4 @@ public class CommandTeleOpTestOpMode extends LinearOpMode {
         scheduler.reset();
     }
 }
+ */

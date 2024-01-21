@@ -3,36 +3,34 @@ package org.firstinspires.ftc.teamcode.commands;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 @Config
 public class RaiseElevatorCommand extends CommandBase {
-    private final Elevator elevatorSubsystem;
-    private final Elevator.ElevatorState elevatorState;
+    private final ScoringMech scoringMechSubsystem;
+    private final double fraction;
 
-    public static double SERVO_THRESHOLD = 400;
+    public RaiseElevatorCommand(double fraction, ScoringMech scoringMechSubsystem) {
+        this.scoringMechSubsystem = scoringMechSubsystem;
+        this.fraction = fraction;
 
-    public RaiseElevatorCommand(Elevator.ElevatorState elevatorState, Elevator elevatorSubsystem) {
-        this.elevatorSubsystem = elevatorSubsystem;
-        this.elevatorState = elevatorState;
-
-        addRequirements(elevatorSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
-        elevatorSubsystem.setElevatorHeight(elevatorState);
+        scoringMechSubsystem.setElevatorHeight(fraction);
     }
 
     @Override
     public void execute() {
-        if (elevatorSubsystem.getElevatorHeight() > SERVO_THRESHOLD) {
-            elevatorSubsystem.setLiftServoState(Elevator.LiftServoState.OUTTAKE);
+        if (scoringMechSubsystem.canLiftServosExtend()) {
+            scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
         }
     }
 
     @Override
     public boolean isFinished() {
-        return !elevatorSubsystem.isElevatorBusy();
+        return !scoringMechSubsystem.isElevatorBusy();
     }
 }

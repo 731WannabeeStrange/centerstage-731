@@ -13,7 +13,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.commands.ResetElevatorCommand;
 import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
-import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.vision.TeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -31,33 +31,33 @@ public class RedPreloadParkAuto extends LinearOpMode {
 
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(11.5, -63, Math.PI / 2), telemetryHandler);
-        Elevator elevator = new Elevator(hardwareMap, telemetryHandler);
+        ScoringMech scoringMech = new ScoringMech(hardwareMap, telemetryHandler);
 
         Command rightCommand = drive.commandBuilder(drive.pose)
                 .splineToLinearHeading(new Pose2d(15, -48, -Math.toRadians(225)), Math.PI / 2)
-                .stopAndAdd(new ScorePixelsCommand(elevator, Elevator.ElevatorState.MINIMUM))
+                .stopAndAdd(new ScorePixelsCommand(0.5, scoringMech))
                 .splineToLinearHeading(new Pose2d(36, -28, 0), 0)
-                .stopAndAdd(new ScorePixelsCommand(elevator, Elevator.ElevatorState.MAXIMUM))
+                .stopAndAdd(new ScorePixelsCommand(1, scoringMech))
                 .splineToLinearHeading(new Pose2d(52, -12, Math.PI/2), 0)
-                .afterTime(0, new ResetElevatorCommand(elevator))
+                .afterTime(0, new ResetElevatorCommand(scoringMech))
                 .build();
 
         Command middleCommand = drive.commandBuilder(drive.pose)
                 .lineToYConstantHeading(-48)
-                .stopAndAdd(new ScorePixelsCommand(elevator, Elevator.ElevatorState.MINIMUM))
+                .stopAndAdd(new ScorePixelsCommand(0.5, scoringMech))
                 .splineToLinearHeading(new Pose2d(36, -34, 0), 0)
-                .stopAndAdd(new ScorePixelsCommand(elevator, Elevator.ElevatorState.MAXIMUM))
+                .stopAndAdd(new ScorePixelsCommand(1, scoringMech))
                 .splineToLinearHeading(new Pose2d(52, -12, Math.PI/2), 0)
-                .afterTime(0, new ResetElevatorCommand(elevator))
+                .afterTime(0, new ResetElevatorCommand(scoringMech))
                 .build();
 
         Command leftCommand = drive.commandBuilder(drive.pose)
                 .splineToLinearHeading(new Pose2d(13, -54, -Math.toRadians(300)), Math.PI / 2)
-                .stopAndAdd(new ScorePixelsCommand(elevator, Elevator.ElevatorState.MINIMUM))
+                .stopAndAdd(new ScorePixelsCommand(0.5, scoringMech))
                 .splineToLinearHeading(new Pose2d(36, -42, 0), 0)
-                .stopAndAdd(new ScorePixelsCommand(elevator, Elevator.ElevatorState.MAXIMUM))
+                .stopAndAdd(new ScorePixelsCommand(1, scoringMech))
                 .splineToLinearHeading(new Pose2d(52, -12, Math.PI/2), 0)
-                .afterTime(0, new ResetElevatorCommand(elevator))
+                .afterTime(0, new ResetElevatorCommand(scoringMech))
                 .build();
 
         TeamPropProcessor teamPropProcessor = new TeamPropProcessor();

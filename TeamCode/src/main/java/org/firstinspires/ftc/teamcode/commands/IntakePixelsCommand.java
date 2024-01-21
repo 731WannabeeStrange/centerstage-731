@@ -3,35 +3,32 @@ package org.firstinspires.ftc.teamcode.commands;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
-import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 @Config
 public class IntakePixelsCommand extends CommandBase {
-    private final Intake intakeSubsystem;
-    private final Elevator elevatorSubsystem;
+    private final ScoringMech scoringMechSubsystem;
 
-    public IntakePixelsCommand(Intake intakeSubsystem, Elevator elevatorSubsystem) {
-        this.intakeSubsystem = intakeSubsystem;
-        this.elevatorSubsystem = elevatorSubsystem;
+    public IntakePixelsCommand(ScoringMech scoringMechSubsystem) {
+        this.scoringMechSubsystem = scoringMechSubsystem;
 
-        addRequirements(intakeSubsystem, elevatorSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
-        intakeSubsystem.start();
-        elevatorSubsystem.setWheelState(Elevator.WheelState.INTAKE);
+        scoringMechSubsystem.startIntake();
+        scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
     }
 
     @Override
     public boolean isFinished() {
-        return elevatorSubsystem.isBucketFull();
+        return scoringMechSubsystem.getNumPixelsInBucket() == 2;
     }
 
     @Override
     public void end(boolean interrupted) {
-        intakeSubsystem.stop();
-        elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
+        scoringMechSubsystem.stopIntake();
+        scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
     }
 }

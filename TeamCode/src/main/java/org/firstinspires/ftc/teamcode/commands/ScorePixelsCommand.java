@@ -4,12 +4,12 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.subsystems.old.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 @Config
 public class ScorePixelsCommand extends CommandBase {
-    private final Elevator elevatorSubsystem;
-    private final Elevator.ElevatorState elevatorState;
+    private final ScoringMech scoringMechSubsystem;
+    private final double fraction;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
     private enum ScoreState {
@@ -19,31 +19,34 @@ public class ScorePixelsCommand extends CommandBase {
     }
     private ScoreState scoreState = ScoreState.GOING_UP;
 
-    public ScorePixelsCommand(Elevator elevatorSubsystem, Elevator.ElevatorState elevatorState) {
-        this.elevatorSubsystem = elevatorSubsystem;
-        this.elevatorState = elevatorState;
+    public ScorePixelsCommand(double fraction, ScoringMech scoringMechSubsystem) {
+        this.scoringMechSubsystem = scoringMechSubsystem;
+        this.fraction = fraction;
 
-        addRequirements(elevatorSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
-        elevatorSubsystem.setElevatorHeight(elevatorState);
+        scoringMechSubsystem.setElevatorHeight(fraction);
     }
 
     @Override
     public void execute() {
         switch (scoreState) {
             case GOING_UP:
-                if (elevatorSubsystem.isInScoringPosition()) {
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.OUTTAKE);
+                if (scoringMechSubsystem.canLiftServosExtend()) {
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
+                }
+                if (scoringMechSubsystem.isElevatorBusy()) {
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.OUTTAKE);
                     eTime.reset();
                     scoreState = ScoreState.RELEASING;
                 }
                 break;
             case RELEASING:
                 if (eTime.time() > 0.6) {
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoreState = ScoreState.IDLE;
                 }
                 break;
