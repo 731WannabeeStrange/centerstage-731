@@ -38,7 +38,8 @@ public class BlueTeleOp extends LinearOpMode {
         Rumbler rumbler = new Rumbler(gamepad1);
 
         scoringMechSubsystem.setDefaultCommand(new ManualScoringCommand(scoringMechSubsystem,
-                () -> gamepad.getButton(GamepadKeys.Button.B),
+                () -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5,
+                () -> gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5,
                 () -> gamepad.getButton(GamepadKeys.Button.Y),
                 () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER),
                 () -> gamepad.getButton(GamepadKeys.Button.A),

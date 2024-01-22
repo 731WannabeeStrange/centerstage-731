@@ -22,7 +22,7 @@ public class ManualScoringCommand extends CommandBase {
     public static double SERVO_RESET_TIME = 0.5;
 
     private final ScoringMech scoringMechSubsystem;
-    private final BooleanSupplier intakeButton, scoreButton, hangButton, downButton, cancelButton;
+    private final BooleanSupplier intakeButton, reverseIntakeButton, scoreButton, hangButton, downButton, cancelButton;
     private final Rumbler rumbler;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
@@ -33,6 +33,7 @@ public class ManualScoringCommand extends CommandBase {
     private enum ScoringState {
         IDLE,
         INTAKING,
+        REVERSE_INTAKE,
         ELEVATE_TO_SCORE,
         SCORING,
         RELEASING,
@@ -48,11 +49,13 @@ public class ManualScoringCommand extends CommandBase {
     private final TelemetryHandler telemetryHandler;
 
     public ManualScoringCommand(ScoringMech scoringMechSubsystem, BooleanSupplier intakeButton,
-                                BooleanSupplier scoreButton, BooleanSupplier hangButton,
-                                BooleanSupplier downButton, BooleanSupplier cancelButton,
-                                Rumbler rumbler, TelemetryHandler telemetryHandler) {
+                                BooleanSupplier reverseIntakeButton, BooleanSupplier scoreButton,
+                                BooleanSupplier hangButton, BooleanSupplier downButton,
+                                BooleanSupplier cancelButton, Rumbler rumbler,
+                                TelemetryHandler telemetryHandler) {
         this.scoringMechSubsystem = scoringMechSubsystem;
         this.intakeButton = intakeButton;
+        this.reverseIntakeButton = reverseIntakeButton;
         this.scoreButton = scoreButton;
         this.hangButton = hangButton;
         this.downButton = downButton;
@@ -68,7 +71,10 @@ public class ManualScoringCommand extends CommandBase {
         switch (scoringState) {
             case IDLE:
                 if (intakeButton.getAsBoolean()) {
-                    if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
+                    if (reverseIntakeButton.getAsBoolean()) {
+                        scoringMechSubsystem.reverseIntake();
+                        scoringState = ScoringState.REVERSE_INTAKE;
+                    } else if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
                         rumbler.rumble(500);
                     } else {
                         scoringMechSubsystem.startIntake();
@@ -90,6 +96,20 @@ public class ManualScoringCommand extends CommandBase {
                     scoringMechSubsystem.stopIntake();
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.IDLE;
+                } else if (reverseIntakeButton.getAsBoolean()) {
+                    scoringMechSubsystem.reverseIntake();
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    scoringState = ScoringState.REVERSE_INTAKE;
+                }
+                break;
+            case REVERSE_INTAKE:
+                if (!intakeButton.getAsBoolean()) {
+                    scoringMechSubsystem.stopIntake();
+                    scoringState = ScoringState.IDLE;
+                } else if (!reverseIntakeButton.getAsBoolean()) {
+                    scoringMechSubsystem.startIntake();
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
+                    scoringState = ScoringState.INTAKING;
                 }
                 break;
             case ELEVATE_TO_SCORE:
@@ -123,8 +143,7 @@ public class ManualScoringCommand extends CommandBase {
                 oldDownButton = downButton.getAsBoolean();
 
                 if (cancelButton.getAsBoolean()) {
-                    scoringMechSubsystem.setElevatorHeight(0);
-                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
+                    scoringMechSubsystem.resetToIntakePosition();
                     scoringState = ScoringState.RESETTING;
                 }
 
@@ -136,8 +155,7 @@ public class ManualScoringCommand extends CommandBase {
                         scoringState = ScoringState.SCORING;
                     } else {
                         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
-                        scoringMechSubsystem.setElevatorHeight(0);
-                        scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
+                        scoringMechSubsystem.resetToIntakePosition();
                         scoringState = ScoringState.RESETTING;
                     }
                 }
@@ -155,10 +173,14 @@ public class ManualScoringCommand extends CommandBase {
                     scoringMechSubsystem.setElevatorHeight(LIFT_DOWN_FRACTION);
                     scoringState = ScoringState.HANGING;
                 }
+                if (cancelButton.getAsBoolean()) {
+                    scoringMechSubsystem.resetToIntakePosition();
+                    scoringState = ScoringState.RESETTING;
+                }
                 break;
             case HANGING:
                 if (cancelButton.getAsBoolean()) {
-                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.TRANSIT);
                     scoringState = ScoringState.SERVO_RESET;
                     eTime.reset();
                 }

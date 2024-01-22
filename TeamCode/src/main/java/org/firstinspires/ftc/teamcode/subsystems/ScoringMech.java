@@ -20,8 +20,8 @@ import org.firstinspires.ftc.teamcode.utils.caching.CachingServo;
 
 @Config
 public class ScoringMech extends SubsystemBase {
-    public static TrapezoidProfile.Constraints liftConstraints = new TrapezoidProfile.Constraints(2500, 2500);
-    public static PIDCoefficients liftCoefficients = new PIDCoefficients(0.004, 0, 0);
+    public static TrapezoidProfile.Constraints liftConstraints = new TrapezoidProfile.Constraints(1500, 1500);
+    public static PIDCoefficients liftCoefficients = new PIDCoefficients(0.005, 0, 0);
     private final ProfiledPIDController liftController = new ProfiledPIDController(
             liftCoefficients.p,
             liftCoefficients.i,
@@ -34,12 +34,14 @@ public class ScoringMech extends SubsystemBase {
     private final RevColorSensorV3 frontColorSensor, backColorSensor;
     private final TelemetryHandler telemetryHandler;
 
-    public static double MIN_POS = 0;
+    public static double MIN_POS = 25;
     public static double MAX_POS = 2000;
     public static double SERVO_THRESHOLD = 800;
 
     private double currentTarget = MIN_POS;
 
+    public static double TRANSIT_OFFSET = 0.05;
+    public static double TRANSIT_THRESHOLD = 50;
     public static double INTAKE_RIGHT_LIFT_POSITION = 0.75;
     public static double INTAKE_LEFT_LIFT_POSITION = 0.11;
     public static double INTAKE_BUCKET_POSITION = 0.34;
@@ -54,6 +56,7 @@ public class ScoringMech extends SubsystemBase {
     public static double INTAKE_MOTOR_POWER = 0.9;
     public static double INTAKE_RIGHT_SERVO_UP_POS = 0.13;
     public static double INTAKE_LEFT_SERVO_UP_POS = 0.24;
+    public static double INTAKE_SERVO_REVERSE_OFFSET = 0.20;
     public static double INTAKE_SERVO_DOWN_OFFSET = 0.48;
 
     public enum WheelState {
@@ -64,6 +67,7 @@ public class ScoringMech extends SubsystemBase {
 
     public enum LiftServoState {
         INTAKE,
+        TRANSIT,
         OUTTAKE,
         LIFT
     }
@@ -117,6 +121,10 @@ public class ScoringMech extends SubsystemBase {
         rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
         leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
 
+        if (Math.abs(rightMotor.getCurrentPosition()) < TRANSIT_THRESHOLD) {
+            setLiftServoState(LiftServoState.INTAKE);
+        }
+
         telemetryHandler.addData("front color distance (in)", frontColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("back color distance (in)", backColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("num pixels in bucket", getNumPixelsInBucket());
@@ -126,6 +134,11 @@ public class ScoringMech extends SubsystemBase {
         telemetryHandler.addData("right intake servo position", rightServo.getPosition());
         telemetryHandler.addData("left intake servo position", leftServo.getPosition());
         telemetryHandler.addData("intake motor power", intakeMotor.getPower());
+    }
+
+    public void resetToIntakePosition() {
+        setElevatorHeight(0);
+        setLiftServoState(ScoringMech.LiftServoState.TRANSIT);
     }
 
     public void setElevatorHeight(double fraction) {
@@ -138,6 +151,11 @@ public class ScoringMech extends SubsystemBase {
                 case INTAKE:
                     rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION);
                     leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION);
+                    bucketServo.setPosition(INTAKE_BUCKET_POSITION);
+                    break;
+                case TRANSIT:
+                    rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION + TRANSIT_OFFSET);
+                    leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION - TRANSIT_OFFSET);
                     bucketServo.setPosition(INTAKE_BUCKET_POSITION);
                     break;
                 case OUTTAKE:
@@ -179,6 +197,12 @@ public class ScoringMech extends SubsystemBase {
         intakeMotor.setPower(0);
         rightServo.setPosition(INTAKE_RIGHT_SERVO_UP_POS);
         leftServo.setPosition(INTAKE_LEFT_SERVO_UP_POS);
+    }
+
+    public void reverseIntake() {
+        intakeMotor.setPower(-INTAKE_MOTOR_POWER);
+        rightServo.setPosition(INTAKE_RIGHT_SERVO_UP_POS + INTAKE_SERVO_REVERSE_OFFSET);
+        leftServo.setPosition(INTAKE_LEFT_SERVO_UP_POS + INTAKE_SERVO_REVERSE_OFFSET);
     }
 
     public double getFrontColor() {
