@@ -46,15 +46,15 @@ public class ScoringMech extends SubsystemBase {
     public static double OUTTAKE_RIGHT_LIFT_POSITION = 0.35;
     public static double OUTTAKE_LEFT_LIFT_POSITION = 0.51;
     public static double OUTTAKE_BUCKET_POSITION = 0.61;
-    public static double LIFT_RIGHT_LIFT_POSITION = 0.55;
-    public static double LIFT_LEFT_LIFT_POSITION = 0.31;
-    public static double LIFT_BUCKET_POSITION = 0.61;
+    public static double LIFT_RIGHT_LIFT_POSITION = 0.25;
+    public static double LIFT_LEFT_LIFT_POSITION = 0.61;
+    public static double LIFT_BUCKET_POSITION = 0.9;
     public static double WHEEL_POWER = 1;
 
     public static double INTAKE_MOTOR_POWER = 0.9;
-    public static double INTAKE_RIGHT_SERVO_UP_POS = 0.16;
+    public static double INTAKE_RIGHT_SERVO_UP_POS = 0.13;
     public static double INTAKE_LEFT_SERVO_UP_POS = 0.24;
-    public static double INTAKE_SERVO_DOWN_OFFSET = 0.53;
+    public static double INTAKE_SERVO_DOWN_OFFSET = 0.48;
 
     public enum WheelState {
         INTAKE,
@@ -117,10 +117,6 @@ public class ScoringMech extends SubsystemBase {
         rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
         leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
 
-        if (rightMotor.getCurrentPosition() < SERVO_THRESHOLD) {
-            setLiftServoState(LiftServoState.INTAKE);
-        }
-
         telemetryHandler.addData("front color distance (in)", frontColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("back color distance (in)", backColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("num pixels in bucket", getNumPixelsInBucket());
@@ -137,24 +133,26 @@ public class ScoringMech extends SubsystemBase {
     }
 
     public void setLiftServoState(LiftServoState liftServoState) {
-        switch (liftServoState) {
-            case INTAKE:
-                rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION);
-                leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION);
-                bucketServo.setPosition(INTAKE_BUCKET_POSITION);
-                break;
-            case OUTTAKE:
-                rightLiftServo.setPosition(OUTTAKE_RIGHT_LIFT_POSITION);
-                leftLiftServo.setPosition(OUTTAKE_LEFT_LIFT_POSITION);
-                bucketServo.setPosition(OUTTAKE_BUCKET_POSITION);
-                break;
-            case LIFT:
-                rightLiftServo.setPosition(LIFT_RIGHT_LIFT_POSITION);
-                leftLiftServo.setPosition(LIFT_LEFT_LIFT_POSITION);
-                bucketServo.setPosition(LIFT_BUCKET_POSITION);
-                break;
+        if (liftServoState != this.liftServoState) {
+            switch (liftServoState) {
+                case INTAKE:
+                    rightLiftServo.setPosition(INTAKE_RIGHT_LIFT_POSITION);
+                    leftLiftServo.setPosition(INTAKE_LEFT_LIFT_POSITION);
+                    bucketServo.setPosition(INTAKE_BUCKET_POSITION);
+                    break;
+                case OUTTAKE:
+                    rightLiftServo.setPosition(OUTTAKE_RIGHT_LIFT_POSITION);
+                    leftLiftServo.setPosition(OUTTAKE_LEFT_LIFT_POSITION);
+                    bucketServo.setPosition(OUTTAKE_BUCKET_POSITION);
+                    break;
+                case LIFT:
+                    rightLiftServo.setPosition(LIFT_RIGHT_LIFT_POSITION);
+                    leftLiftServo.setPosition(LIFT_LEFT_LIFT_POSITION);
+                    bucketServo.setPosition(LIFT_BUCKET_POSITION);
+                    break;
+            }
+            this.liftServoState = liftServoState;
         }
-        this.liftServoState = liftServoState;
     }
 
     public void setWheelState(WheelState wheelState) {
@@ -208,7 +206,7 @@ public class ScoringMech extends SubsystemBase {
     }
 
     public boolean canLiftServosExtend() {
-        return rightMotor.getCurrentPosition() > SERVO_THRESHOLD;
+        return Math.abs(rightMotor.getCurrentPosition()) > SERVO_THRESHOLD;
     }
 
     public boolean isElevatorBusy() {

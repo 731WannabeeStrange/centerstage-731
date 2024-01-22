@@ -14,10 +14,12 @@ import java.util.function.BooleanSupplier;
 @Config
 public class ManualScoringCommand extends CommandBase {
     public static double RELEASE_TIME = 0.6;
-    public static double LIFT_FRACTION = 0.8;
+    public static double LIFT_UP_FRACTION = 0.75;
+    public static double LIFT_DOWN_FRACTION = 0.04;
     public static double SCORING_INCREMENT = 0.03;
     public static double MAX_SCORING_FRACTION = 1.0;
     public static double MIN_SCORING_FRACTION = 0.5;
+    public static double SERVO_RESET_TIME = 0.5;
 
     private final ScoringMech scoringMechSubsystem;
     private final BooleanSupplier intakeButton, scoreButton, hangButton, downButton, cancelButton;
@@ -31,9 +33,13 @@ public class ManualScoringCommand extends CommandBase {
     private enum ScoringState {
         IDLE,
         INTAKING,
+        ELEVATE_TO_SCORE,
         SCORING,
         RELEASING,
+        ELEVATE_TO_HANG,
+        WAITING_FOR_HANG,
         HANGING,
+        SERVO_RESET,
         RESETTING
     }
 
@@ -72,12 +78,11 @@ public class ManualScoringCommand extends CommandBase {
                 }
                 if (scoreButton.getAsBoolean() && scoringMechSubsystem.getNumPixelsInBucket() > 0) {
                     scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
-                    scoringState = ScoringState.SCORING;
+                    scoringState = ScoringState.ELEVATE_TO_SCORE;
                 }
                 if (hangButton.getAsBoolean()) {
-                    scoringMechSubsystem.setElevatorHeight(LIFT_FRACTION);
-                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
-                    scoringState = ScoringState.HANGING;
+                    scoringMechSubsystem.setElevatorHeight(LIFT_UP_FRACTION);
+                    scoringState = ScoringState.ELEVATE_TO_HANG;
                 }
                 break;
             case INTAKING:
@@ -87,8 +92,13 @@ public class ManualScoringCommand extends CommandBase {
                     scoringState = ScoringState.IDLE;
                 }
                 break;
+            case ELEVATE_TO_SCORE:
+                if (!scoreButton.getAsBoolean()) {
+                    scoringState = ScoringState.SCORING;
+                }
+                break;
             case SCORING:
-                if (scoringMechSubsystem.getLiftServoState() != ScoringMech.LiftServoState.OUTTAKE && scoringMechSubsystem.canLiftServosExtend()) {
+                if (scoringMechSubsystem.canLiftServosExtend()) {
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
                 }
 
@@ -114,6 +124,7 @@ public class ManualScoringCommand extends CommandBase {
 
                 if (cancelButton.getAsBoolean()) {
                     scoringMechSubsystem.setElevatorHeight(0);
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
                     scoringState = ScoringState.RESETTING;
                 }
 
@@ -126,15 +137,34 @@ public class ManualScoringCommand extends CommandBase {
                     } else {
                         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                         scoringMechSubsystem.setElevatorHeight(0);
+                        scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
                         scoringState = ScoringState.RESETTING;
                     }
                 }
                 break;
-            case HANGING:
-                if (scoringMechSubsystem.getLiftServoState() != ScoringMech.LiftServoState.LIFT && scoringMechSubsystem.canLiftServosExtend()) {
+            case ELEVATE_TO_HANG:
+                if (!hangButton.getAsBoolean()) {
+                    scoringState = ScoringState.WAITING_FOR_HANG;
+                }
+                break;
+            case WAITING_FOR_HANG:
+                if (scoringMechSubsystem.canLiftServosExtend()) {
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
                 }
                 if (hangButton.getAsBoolean() && !scoringMechSubsystem.isElevatorBusy()) {
+                    scoringMechSubsystem.setElevatorHeight(LIFT_DOWN_FRACTION);
+                    scoringState = ScoringState.HANGING;
+                }
+                break;
+            case HANGING:
+                if (cancelButton.getAsBoolean()) {
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
+                    scoringState = ScoringState.SERVO_RESET;
+                    eTime.reset();
+                }
+                break;
+            case SERVO_RESET:
+                if (eTime.time() > SERVO_RESET_TIME) {
                     scoringMechSubsystem.setElevatorHeight(0);
                     scoringState = ScoringState.RESETTING;
                 }
