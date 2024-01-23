@@ -17,7 +17,7 @@ public class IntakePixelsCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        scoringMechSubsystem.startIntake();
+        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STARTED);
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
     }
 
@@ -28,7 +28,7 @@ public class IntakePixelsCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        scoringMechSubsystem.stopIntake();
+        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STOPPED);
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
     }
 }

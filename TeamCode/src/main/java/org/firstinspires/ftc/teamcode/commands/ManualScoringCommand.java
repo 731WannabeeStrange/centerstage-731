@@ -14,39 +14,21 @@ import java.util.function.BooleanSupplier;
 @Config
 public class ManualScoringCommand extends CommandBase {
     public static double RELEASE_TIME = 0.6;
-    public static double LIFT_UP_FRACTION = 0.75;
-    public static double LIFT_DOWN_FRACTION = 0.04;
-    public static double SCORING_INCREMENT = 0.03;
-    public static double MAX_SCORING_FRACTION = 1.0;
-    public static double MIN_SCORING_FRACTION = 0.5;
-    public static double SERVO_RESET_TIME = 0.5;
+    public static double LIFT_UP_POS = 1500;
+    public static double LIFT_DOWN_POS = 80;
+    public static double SCORING_INCREMENT = 60;
+    public static double MIN_SCORING_POS = 1000;
 
     private final ScoringMech scoringMechSubsystem;
     private final BooleanSupplier intakeButton, reverseIntakeButton, scoreButton, hangButton, downButton, cancelButton;
     private final Rumbler rumbler;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+    private final TelemetryHandler telemetryHandler;
 
-    private double lastScoringPosition = 0.8;
+    private double lastScoringPosition = 1600;
     private boolean oldUpButton = false;
     private boolean oldDownButton = false;
-
-    private enum ScoringState {
-        IDLE,
-        INTAKING,
-        REVERSE_INTAKE,
-        ELEVATE_TO_SCORE,
-        SCORING,
-        RELEASING,
-        ELEVATE_TO_HANG,
-        WAITING_FOR_HANG,
-        HANGING,
-        SERVO_RESET,
-        RESETTING
-    }
-
     private ScoringState scoringState = ScoringState.INTAKING;
-
-    private final TelemetryHandler telemetryHandler;
 
     public ManualScoringCommand(ScoringMech scoringMechSubsystem, BooleanSupplier intakeButton,
                                 BooleanSupplier reverseIntakeButton, BooleanSupplier scoreButton,
@@ -72,12 +54,12 @@ public class ManualScoringCommand extends CommandBase {
             case IDLE:
                 if (intakeButton.getAsBoolean()) {
                     if (reverseIntakeButton.getAsBoolean()) {
-                        scoringMechSubsystem.reverseIntake();
+                        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.REVERSED);
                         scoringState = ScoringState.REVERSE_INTAKE;
                     } else if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
                         rumbler.rumble(500);
                     } else {
-                        scoringMechSubsystem.startIntake();
+                        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STARTED);
                         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
                         scoringState = ScoringState.INTAKING;
                     }
@@ -87,27 +69,27 @@ public class ManualScoringCommand extends CommandBase {
                     scoringState = ScoringState.ELEVATE_TO_SCORE;
                 }
                 if (hangButton.getAsBoolean()) {
-                    scoringMechSubsystem.setElevatorHeight(LIFT_UP_FRACTION);
+                    scoringMechSubsystem.setElevatorHeight(LIFT_UP_POS);
                     scoringState = ScoringState.ELEVATE_TO_HANG;
                 }
                 break;
             case INTAKING:
                 if (!intakeButton.getAsBoolean() || scoringMechSubsystem.getNumPixelsInBucket() == 2) {
-                    scoringMechSubsystem.stopIntake();
+                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STOPPED);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.IDLE;
                 } else if (reverseIntakeButton.getAsBoolean()) {
-                    scoringMechSubsystem.reverseIntake();
+                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.REVERSED);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.REVERSE_INTAKE;
                 }
                 break;
             case REVERSE_INTAKE:
                 if (!intakeButton.getAsBoolean()) {
-                    scoringMechSubsystem.stopIntake();
+                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STOPPED);
                     scoringState = ScoringState.IDLE;
                 } else if (!reverseIntakeButton.getAsBoolean()) {
-                    scoringMechSubsystem.startIntake();
+                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STARTED);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
                     scoringState = ScoringState.INTAKING;
                 }
@@ -137,13 +119,13 @@ public class ManualScoringCommand extends CommandBase {
                 if (downButton.getAsBoolean() && !oldDownButton) {
                     lastScoringPosition -= SCORING_INCREMENT;
                 }
-                lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_FRACTION, MAX_SCORING_FRACTION);
+                lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_POS, ScoringMech.ELEVATOR_PARAMS.MAX_POS);
                 scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
                 oldUpButton = intakeButton.getAsBoolean();
                 oldDownButton = downButton.getAsBoolean();
 
                 if (cancelButton.getAsBoolean()) {
-                    scoringMechSubsystem.resetToIntakePosition();
+                    scoringMechSubsystem.reset();
                     scoringState = ScoringState.RESETTING;
                 }
 
@@ -155,7 +137,7 @@ public class ManualScoringCommand extends CommandBase {
                         scoringState = ScoringState.SCORING;
                     } else {
                         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
-                        scoringMechSubsystem.resetToIntakePosition();
+                        scoringMechSubsystem.reset();
                         scoringState = ScoringState.RESETTING;
                     }
                 }
@@ -170,34 +152,40 @@ public class ManualScoringCommand extends CommandBase {
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
                 }
                 if (hangButton.getAsBoolean() && !scoringMechSubsystem.isElevatorBusy()) {
-                    scoringMechSubsystem.setElevatorHeight(LIFT_DOWN_FRACTION);
+                    scoringMechSubsystem.setElevatorHeight(LIFT_DOWN_POS);
                     scoringState = ScoringState.HANGING;
                 }
                 if (cancelButton.getAsBoolean()) {
-                    scoringMechSubsystem.resetToIntakePosition();
+                    scoringMechSubsystem.reset();
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
             case HANGING:
                 if (cancelButton.getAsBoolean()) {
-                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.TRANSIT);
-                    scoringState = ScoringState.SERVO_RESET;
-                    eTime.reset();
-                }
-                break;
-            case SERVO_RESET:
-                if (eTime.time() > SERVO_RESET_TIME) {
-                    scoringMechSubsystem.setElevatorHeight(0);
+                    scoringMechSubsystem.reset();
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
             case RESETTING:
-                if (!scoringMechSubsystem.isElevatorBusy()) {
+                if (!scoringMechSubsystem.isElevatorBusy() && scoringMechSubsystem.getLiftServoState() == ScoringMech.LiftServoState.INTAKE) {
                     scoringState = ScoringState.IDLE;
                 }
                 break;
         }
 
         telemetryHandler.addData("scoring state", scoringState);
+    }
+
+    private enum ScoringState {
+        IDLE,
+        INTAKING,
+        REVERSE_INTAKE,
+        ELEVATE_TO_SCORE,
+        SCORING,
+        RELEASING,
+        ELEVATE_TO_HANG,
+        WAITING_FOR_HANG,
+        HANGING,
+        RESETTING
     }
 }
