@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.utils.ServoPair;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.caching.CachingCRServo;
 import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
@@ -35,7 +36,8 @@ public class ScoringMech extends SubsystemBase {
             liftConstraints
     );
     private final DcMotorEx leftMotor, rightMotor, intakeMotor;
-    private final Servo rightIntakeServo, leftIntakeServo, bucketServo, leftLiftServo, rightLiftServo;
+    private final Servo bucketServo;
+    private final ServoPair liftServoPair, intakeServoPair;
     private final CRServo wheelServo;
     private final RevColorSensorV3 frontColorSensor, backColorSensor;
     private final TelemetryHandler telemetryHandler;
@@ -63,18 +65,20 @@ public class ScoringMech extends SubsystemBase {
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
 
         bucketServo = new CachingServo(hardwareMap.get(Servo.class, "bucket"));
-        leftLiftServo = new CachingServo(hardwareMap.get(Servo.class, "leftLift"));
-        rightLiftServo = new CachingServo(hardwareMap.get(Servo.class, "rightLift"));
-        rightIntakeServo = new CachingServo(hardwareMap.get(Servo.class, "rightIntake"));
-        leftIntakeServo = new CachingServo(hardwareMap.get(Servo.class, "leftIntake"));
         wheelServo = new CachingCRServo(hardwareMap.get(CRServo.class, "wheel"));
 
-        rightLiftServo.setPosition(LIFT_SERVO_PARAMS.INTAKE_RIGHT_POSITION);
-        leftLiftServo.setPosition(LIFT_SERVO_PARAMS.INTAKE_LEFT_POSITION);
-        bucketServo.setPosition(BUCKET_PARAMS.INTAKE_POSITION);
-        rightIntakeServo.setPosition(INTAKE_PARAMS.RIGHT_UP_POS);
-        leftIntakeServo.setPosition(INTAKE_PARAMS.LEFT_UP_POS);
-        leftIntakeServo.setDirection(Servo.Direction.REVERSE);
+        intakeServoPair = new ServoPair(
+                new CachingServo(hardwareMap.get(Servo.class, "rightIntake")),
+                new CachingServo(hardwareMap.get(Servo.class, "leftIntake"))
+        );
+        liftServoPair = new ServoPair(
+                new CachingServo(hardwareMap.get(Servo.class, "rightLift")),
+                new CachingServo(hardwareMap.get(Servo.class, "leftLift"))
+        );
+
+        intakeServoPair.setPosition(INTAKE_PARAMS.UP_POS);
+        liftServoPair.setPosition(LIFT_SERVO_PARAMS.INTAKE_POS);
+        bucketServo.setPosition(BUCKET_PARAMS.INTAKE_POS);
 
         frontColorSensor = hardwareMap.get(RevColorSensorV3.class, "frontColor");
         backColorSensor = hardwareMap.get(RevColorSensorV3.class, "backColor");
@@ -88,7 +92,7 @@ public class ScoringMech extends SubsystemBase {
             case ACTIVE:
                 rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
                 leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
-                if (Math.abs(rightMotor.getCurrentPosition()) < ELEVATOR_PARAMS.TRANSIT_THRESHOLD) {
+                if (Math.abs(rightMotor.getCurrentPosition()) < ELEVATOR_PARAMS.TRANSIT_THRESHOLD && liftServoState == LiftServoState.TRANSIT) {
                     setLiftServoState(LiftServoState.INTAKE);
                 }
                 break;
@@ -151,18 +155,15 @@ public class ScoringMech extends SubsystemBase {
         switch (intakeState) {
             case STARTED:
                 intakeMotor.setPower(INTAKE_PARAMS.MOTOR_POWER);
-                rightIntakeServo.setPosition(INTAKE_PARAMS.RIGHT_UP_POS + INTAKE_PARAMS.DOWN_OFFSET);
-                leftIntakeServo.setPosition(INTAKE_PARAMS.LEFT_UP_POS + INTAKE_PARAMS.DOWN_OFFSET);
+                intakeServoPair.setPosition(INTAKE_PARAMS.DOWN_POS);
                 break;
             case REVERSED:
                 intakeMotor.setPower(-INTAKE_PARAMS.MOTOR_POWER);
-                rightIntakeServo.setPosition(INTAKE_PARAMS.RIGHT_UP_POS + INTAKE_PARAMS.REVERSE_OFFSET);
-                leftIntakeServo.setPosition(INTAKE_PARAMS.LEFT_UP_POS + INTAKE_PARAMS.REVERSE_OFFSET);
+                intakeServoPair.setPosition(INTAKE_PARAMS.REVERSE_POS);
                 break;
             case STOPPED:
                 intakeMotor.setPower(0);
-                rightIntakeServo.setPosition(INTAKE_PARAMS.RIGHT_UP_POS);
-                leftIntakeServo.setPosition(INTAKE_PARAMS.LEFT_UP_POS);
+                intakeServoPair.setPosition(INTAKE_PARAMS.UP_POS);
                 break;
         }
     }
@@ -193,24 +194,20 @@ public class ScoringMech extends SubsystemBase {
         if (liftServoState != this.liftServoState) {
             switch (liftServoState) {
                 case INTAKE:
-                    rightLiftServo.setPosition(LIFT_SERVO_PARAMS.INTAKE_RIGHT_POSITION);
-                    leftLiftServo.setPosition(LIFT_SERVO_PARAMS.INTAKE_LEFT_POSITION);
-                    bucketServo.setPosition(BUCKET_PARAMS.INTAKE_POSITION);
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.INTAKE_POS);
+                    bucketServo.setPosition(BUCKET_PARAMS.INTAKE_POS);
                     break;
                 case TRANSIT:
-                    rightLiftServo.setPosition(LIFT_SERVO_PARAMS.INTAKE_RIGHT_POSITION + LIFT_SERVO_PARAMS.TRANSIT_OFFSET);
-                    leftLiftServo.setPosition(LIFT_SERVO_PARAMS.INTAKE_LEFT_POSITION - LIFT_SERVO_PARAMS.TRANSIT_OFFSET);
-                    bucketServo.setPosition(BUCKET_PARAMS.INTAKE_POSITION);
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.TRANSIT_POS);
+                    bucketServo.setPosition(BUCKET_PARAMS.TRANSIT_POS);
                     break;
                 case OUTTAKE:
-                    rightLiftServo.setPosition(LIFT_SERVO_PARAMS.OUTTAKE_RIGHT_POSITION);
-                    leftLiftServo.setPosition(LIFT_SERVO_PARAMS.OUTTAKE_LEFT_POSITION);
-                    bucketServo.setPosition(BUCKET_PARAMS.OUTTAKE_POSITION);
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.OUTTAKE_POS);
+                    bucketServo.setPosition(BUCKET_PARAMS.OUTTAKE_POS);
                     break;
                 case LIFT:
-                    rightLiftServo.setPosition(LIFT_SERVO_PARAMS.HANG_RIGHT_POSITION);
-                    leftLiftServo.setPosition(LIFT_SERVO_PARAMS.HANG_LEFT_POSITION);
-                    bucketServo.setPosition(BUCKET_PARAMS.HANG_POSITION);
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.HANG_POS);
+                    bucketServo.setPosition(BUCKET_PARAMS.HANG_POS);
                     break;
             }
             this.liftServoState = liftServoState;
@@ -250,7 +247,7 @@ public class ScoringMech extends SubsystemBase {
     }
 
     public static class ElevatorParams {
-        public double MIN_POS = 25;
+        public double MIN_POS = 0;
         public double MAX_POS = 2000;
         public double SERVO_THRESHOLD = 800;
         public double SERVO_WAIT_THRESHOLD = 800;
@@ -260,26 +257,23 @@ public class ScoringMech extends SubsystemBase {
 
     public static class IntakeParams {
         public double MOTOR_POWER = 0.9;
-        public double RIGHT_UP_POS = 0.13;
-        public double LEFT_UP_POS = 0.24;
-        public double REVERSE_OFFSET = 0.20;
-        public double DOWN_OFFSET = 0.48;
+        public double UP_POS = 0.25;
+        public double REVERSE_POS = 0.4;
+        public double DOWN_POS = 0.75;
     }
 
     public static class LiftServoParams {
-        public double TRANSIT_OFFSET = 0.05;
-        public double INTAKE_RIGHT_POSITION = 0.75;
-        public double INTAKE_LEFT_POSITION = 0.11;
-        public double OUTTAKE_RIGHT_POSITION = 0.35;
-        public double OUTTAKE_LEFT_POSITION = 0.51;
-        public double HANG_RIGHT_POSITION = 0.25;
-        public double HANG_LEFT_POSITION = 0.61;
+        public double INTAKE_POS = 0.66;
+        public double TRANSIT_POS = 0.5;
+        public double OUTTAKE_POS = 0.2;
+        public double HANG_POS = 0.2;
     }
 
     public static class BucketParams {
-        public double INTAKE_POSITION = 0.34;
-        public double OUTTAKE_POSITION = 0.61;
-        public double HANG_POSITION = 0.9;
+        public double INTAKE_POS = 0.32;
+        public double TRANSIT_POS = 0.55;
+        public double OUTTAKE_POS = 0.57;
+        public double HANG_POS = 0.83;
         public double WHEEL_POWER = 1;
         public double BACK_COLOR_THRESHOLD = 0.5;
         public double FRONT_COLOR_THRESHOLD = 1.0;
