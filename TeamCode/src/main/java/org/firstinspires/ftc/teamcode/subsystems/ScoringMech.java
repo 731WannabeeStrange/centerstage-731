@@ -88,20 +88,21 @@ public class ScoringMech extends SubsystemBase {
 
     @Override
     public void periodic() {
+        rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
+        leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
+
         switch (scoringMechState) {
             case ACTIVE:
-                rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
-                leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
-                if (Math.abs(rightMotor.getCurrentPosition()) < ELEVATOR_PARAMS.TRANSIT_THRESHOLD && liftServoState == LiftServoState.TRANSIT) {
+                break;
+            case TRANSIT:
+                if (liftController.atGoal()) {
+                    setElevatorHeight(0);
                     setLiftServoState(LiftServoState.INTAKE);
+                    scoringMechState = ScoringMechState.RESETTING;
                 }
                 break;
-            case WAITING_ON_SERVOS:
-                if (elapsedTime.time() > ELEVATOR_PARAMS.SERVO_WAIT_TIME) {
-                    // set motor powers here to avoid funny stuff with the isBusy
-                    rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
-                    leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
-
+            case RESETTING:
+                if (liftController.atGoal()) {
                     scoringMechState = ScoringMechState.ACTIVE;
                 }
                 break;
@@ -120,13 +121,8 @@ public class ScoringMech extends SubsystemBase {
 
     public void reset() {
         setLiftServoState(LiftServoState.TRANSIT);
-        currentTarget = ELEVATOR_PARAMS.MIN_POS;
-        if (getElevatorHeight() < ELEVATOR_PARAMS.SERVO_WAIT_THRESHOLD) {
-            scoringMechState = ScoringMechState.WAITING_ON_SERVOS;
-            elapsedTime.reset();
-        } else {
-            scoringMechState = ScoringMechState.ACTIVE;
-        }
+        setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS);
+        scoringMechState = ScoringMechState.TRANSIT;
     }
 
     public double getElevatorHeight() {
@@ -219,7 +215,7 @@ public class ScoringMech extends SubsystemBase {
     }
 
     public boolean isElevatorBusy() {
-        return !liftController.atGoal() || scoringMechState == ScoringMechState.WAITING_ON_SERVOS;
+        return !liftController.atGoal() || scoringMechState != ScoringMechState.ACTIVE;
     }
 
     public enum IntakeState {
@@ -243,16 +239,15 @@ public class ScoringMech extends SubsystemBase {
 
     public enum ScoringMechState {
         ACTIVE,
-        WAITING_ON_SERVOS
+        TRANSIT,
+        RESETTING
     }
 
     public static class ElevatorParams {
-        public double MIN_POS = 0;
-        public double MAX_POS = 2000;
+        public double MIN_POS = 20;
+        public double MAX_POS = 2800;
         public double SERVO_THRESHOLD = 800;
-        public double SERVO_WAIT_THRESHOLD = 800;
-        public double SERVO_WAIT_TIME = 0.5;
-        public double TRANSIT_THRESHOLD = 50;
+        public double TRANSIT_POS = 150;
     }
 
     public static class IntakeParams {
