@@ -13,7 +13,7 @@ import java.util.function.BooleanSupplier;
 
 @Config
 public class ManualScoringCommand extends CommandBase {
-    public static double RELEASE_TIME = 0.5;
+    public static double RELEASE_TIME = 0.3;
     public static double LIFT_UP_POS = 2000;
     public static double LIFT_DOWN_POS = 150;
     public static double SCORING_INCREMENT = 150;

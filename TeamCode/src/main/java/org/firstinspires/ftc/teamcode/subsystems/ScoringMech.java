@@ -2,14 +2,12 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
-import com.arcrobotics.ftclib.controller.wpilibcontroller.ProfiledPIDController;
-import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -22,19 +20,15 @@ import org.firstinspires.ftc.teamcode.utils.caching.CachingServo;
 
 @Config
 public class ScoringMech extends SubsystemBase {
-    public static TrapezoidProfile.Constraints liftConstraints = new TrapezoidProfile.Constraints(1500, 1500);
-    public static PIDCoefficients liftCoefficients = new PIDCoefficients(0.005, 0, 0);
     public static ElevatorParams ELEVATOR_PARAMS = new ElevatorParams();
     public static IntakeParams INTAKE_PARAMS = new IntakeParams();
     public static LiftServoParams LIFT_SERVO_PARAMS = new LiftServoParams();
     public static BucketParams BUCKET_PARAMS = new BucketParams();
 
-    private final ProfiledPIDController liftController = new ProfiledPIDController(
-            liftCoefficients.p,
-            liftCoefficients.i,
-            liftCoefficients.d,
-            liftConstraints
-    );
+    private final PIDFController rightLiftController = new PIDFController(
+            ELEVATOR_PARAMS.kP, ELEVATOR_PARAMS.kI, ELEVATOR_PARAMS.kD, ELEVATOR_PARAMS.kF);
+    private final PIDFController leftLiftController = new PIDFController(
+            ELEVATOR_PARAMS.kP, ELEVATOR_PARAMS.kI, ELEVATOR_PARAMS.kD, ELEVATOR_PARAMS.kF);
     private final DcMotorEx leftMotor, rightMotor, intakeMotor;
     private final Servo bucketServo;
     private final ServoPair liftServoPair, intakeServoPair;
@@ -48,10 +42,8 @@ public class ScoringMech extends SubsystemBase {
     private ScoringMechState scoringMechState = ScoringMechState.ACTIVE;
 
     public ScoringMech(HardwareMap hardwareMap, TelemetryHandler telemetryHandler) {
-        liftController.setTolerance(20);
-
-        leftMotor = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "leftOuttake"));
-        rightMotor = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rightOuttake"));
+        leftMotor = hardwareMap.get(DcMotorEx.class, "leftOuttake");
+        rightMotor = hardwareMap.get(DcMotorEx.class, "rightOuttake");
         intakeMotor = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "intakeMotor"));
 
         rightMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -63,6 +55,9 @@ public class ScoringMech extends SubsystemBase {
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
+
+        rightLiftController.setTolerance(ELEVATOR_PARAMS.POSITION_TOLERANCE);
+        leftLiftController.setTolerance(ELEVATOR_PARAMS.POSITION_TOLERANCE);
 
         bucketServo = new CachingServo(hardwareMap.get(Servo.class, "bucket"));
         wheelServo = new CachingCRServo(hardwareMap.get(CRServo.class, "wheel"));
@@ -88,21 +83,45 @@ public class ScoringMech extends SubsystemBase {
 
     @Override
     public void periodic() {
-        rightMotor.setPower(liftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
-        leftMotor.setPower(liftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
+        rightMotor.setPower(rightLiftController.calculate(rightMotor.getCurrentPosition(), currentTarget));
+        leftMotor.setPower(leftLiftController.calculate(leftMotor.getCurrentPosition(), currentTarget));
 
         switch (scoringMechState) {
             case ACTIVE:
                 break;
+            case WAITING_FOR_TRANSIT_POS:
+                if (!areLiftMotorsBusy()) {
+                    setLiftServoState(LiftServoState.TRANSIT);
+                    scoringMechState = ScoringMechState.WAITING_FOR_TRANSIT_SERVO;
+                    elapsedTime.reset();
+                }
+                break;
+            case WAITING_FOR_TRANSIT_SERVO:
+                if (elapsedTime.time() > 0.3) {
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.INTAKE_POS);
+                    bucketServo.setPosition((BUCKET_PARAMS.INTAKE_POS + BUCKET_PARAMS.TRANSIT_POS) / 2);
+                    scoringMechState = ScoringMechState.WAITING_ON_SERVOS;
+                    elapsedTime.reset();
+                }
+                break;
             case TRANSIT:
-                if (liftController.atGoal()) {
-                    setElevatorHeight(0);
-                    setLiftServoState(LiftServoState.INTAKE);
+                if (!areLiftMotorsBusy()) {
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.INTAKE_POS);
+                    bucketServo.setPosition((BUCKET_PARAMS.INTAKE_POS + BUCKET_PARAMS.TRANSIT_POS) / 2);
+                    scoringMechState = ScoringMechState.WAITING_ON_SERVOS;
+                    elapsedTime.reset();
+                }
+                break;
+            case WAITING_ON_SERVOS:
+                if (elapsedTime.time() > ELEVATOR_PARAMS.SERVO_WAIT_TIME) {
+                    setElevatorHeight(ELEVATOR_PARAMS.MIN_POS);
                     scoringMechState = ScoringMechState.RESETTING;
                 }
                 break;
             case RESETTING:
-                if (liftController.atGoal()) {
+                if (!areLiftMotorsBusy()) {
+                    bucketServo.setPosition(BUCKET_PARAMS.INTAKE_POS);
+                    liftServoState = LiftServoState.INTAKE; // for a little housekeeping
                     scoringMechState = ScoringMechState.ACTIVE;
                 }
                 break;
@@ -119,10 +138,19 @@ public class ScoringMech extends SubsystemBase {
         //telemetryHandler.addData("intake motor power", intakeMotor.getPower());
     }
 
+    private boolean areLiftMotorsBusy() {
+        return !rightLiftController.atSetPoint() || !leftLiftController.atSetPoint();
+    }
+
     public void reset() {
-        setLiftServoState(LiftServoState.TRANSIT);
-        setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS);
-        scoringMechState = ScoringMechState.TRANSIT;
+        if (getElevatorHeight() < ELEVATOR_PARAMS.TRANSIT_POS) {
+            setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS + 300);
+            scoringMechState = ScoringMechState.WAITING_FOR_TRANSIT_POS;
+        } else {
+            setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS);
+            setLiftServoState(LiftServoState.TRANSIT);
+            scoringMechState = ScoringMechState.TRANSIT;
+        }
     }
 
     public double getElevatorHeight() {
@@ -215,7 +243,7 @@ public class ScoringMech extends SubsystemBase {
     }
 
     public boolean isElevatorBusy() {
-        return !liftController.atGoal() || scoringMechState != ScoringMechState.ACTIVE;
+        return areLiftMotorsBusy() || scoringMechState != ScoringMechState.ACTIVE;
     }
 
     public enum IntakeState {
@@ -239,15 +267,24 @@ public class ScoringMech extends SubsystemBase {
 
     public enum ScoringMechState {
         ACTIVE,
+        WAITING_FOR_TRANSIT_POS,
+        WAITING_FOR_TRANSIT_SERVO,
         TRANSIT,
+        WAITING_ON_SERVOS,
         RESETTING
     }
 
     public static class ElevatorParams {
-        public double MIN_POS = 20;
-        public double MAX_POS = 2800;
+        public double kP = 0.006;
+        public double kI = 0;
+        public double kD = 0;
+        public double kF = 2e-7;
+        public double POSITION_TOLERANCE = 15;
+        public double MIN_POS = 25;
+        public double MAX_POS = 3000;
         public double SERVO_THRESHOLD = 800;
-        public double TRANSIT_POS = 150;
+        public double SERVO_WAIT_TIME = 0.3;
+        public double TRANSIT_POS = 500;
     }
 
     public static class IntakeParams {
