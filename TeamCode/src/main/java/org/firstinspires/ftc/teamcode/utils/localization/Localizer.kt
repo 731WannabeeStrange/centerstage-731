@@ -2,12 +2,18 @@ package org.firstinspires.ftc.teamcode.utils.localization
 
 import com.acmerobotics.roadrunner.Pose2d
 import com.acmerobotics.roadrunner.PoseVelocity2d
+import com.acmerobotics.roadrunner.Time
+import com.acmerobotics.roadrunner.Twist2dDual
 import com.acmerobotics.roadrunner.Vector2d
 
 interface Localizer {
     var poseEstimate: Pose2d
     val poseVelocity: PoseVelocity2d
     fun update()
+}
+
+interface IncrementalLocalizer {
+    fun update(): Twist2dDual<Time>
 }
 
 class AbsoluteLocalizer(

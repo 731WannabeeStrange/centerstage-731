@@ -62,13 +62,13 @@ public final class TuningOpModes {
                 IncrementalLocalizer incrementalLocalizer = ((AbsoluteLocalizer) md.localizer).getIncrementalLocalizer();
                 if (incrementalLocalizer instanceof ThreeDeadWheelLocalizer) {
                     ThreeDeadWheelLocalizer dl = (ThreeDeadWheelLocalizer) incrementalLocalizer;
-                    parEncs.add(dl.par0);
-                    parEncs.add(dl.par1);
-                    perpEncs.add(dl.perp);
+                    parEncs.add(dl.getPar0());
+                    parEncs.add(dl.getPar1());
+                    perpEncs.add(dl.getPerp());
                 } else if (incrementalLocalizer instanceof TwoDeadWheelLocalizer) {
                     TwoDeadWheelLocalizer dl = (TwoDeadWheelLocalizer) incrementalLocalizer;
-                    parEncs.add(dl.par);
-                    perpEncs.add(dl.perp);
+                    parEncs.add(dl.getPar());
+                    perpEncs.add(dl.getPerp());
                 } else {
                     throw new IllegalArgumentException("Can't tune with this incremental localizer: " + incrementalLocalizer.getClass().getName());
                 }

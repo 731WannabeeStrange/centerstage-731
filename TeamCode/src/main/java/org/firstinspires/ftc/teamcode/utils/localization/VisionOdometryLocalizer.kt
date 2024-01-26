@@ -1,33 +1,20 @@
-/*
 package org.firstinspires.ftc.teamcode.utils.localization
 
 import com.acmerobotics.roadrunner.Pose2d
 import com.acmerobotics.roadrunner.PoseVelocity2d
-import com.acmerobotics.roadrunner.Twist2d
 import com.acmerobotics.roadrunner.Vector2d
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.ejml.data.DMatrix2x2
 import org.ejml.data.DMatrix3x3
 import org.ejml.equation.Equation
 import org.ejml.equation.Sequence
-import wannabee.lie.LiePose2d
-import wannabee.lie.LieTwist2d
-
-private fun Twist2d.toLieTwist2d() = LieTwist2d(this.line.x, this.line.y, this.angle)
-private fun Pose2d.toLiePose2d() = LiePose2d(this.position.x, this.position.y, this.heading.log())
-private fun LiePose2d.toPose2d() = Pose2d(this.position.a1, this.position.a2, this.rotation.log())
+import org.firstinspires.ftc.teamcode.utils.plusJacobians
 
 class VisionOdometryLocalizer(
     hardwareMap: HardwareMap,
-    private val inPerTick: Double,
-    poseEstimate: Pose2d
-): Localizer {
-    private var liePoseEstimate = poseEstimate.toLiePose2d()
+    inPerTick: Double,
     override var poseEstimate: Pose2d
-        get() = liePoseEstimate.toPose2d()
-        set(value) {
-            liePoseEstimate = value.toLiePose2d()
-        }
+): Localizer {
     override var poseVelocity = PoseVelocity2d(Vector2d(0.0, 0.0), 0.0)
         private set
 
@@ -61,8 +48,8 @@ class VisionOdometryLocalizer(
             J_u, "G",
             odometryNoise, "W",
             H, "H",
-            aprilTagNoise, "R"
-                    Z, "Z",
+            aprilTagNoise, "R",
+            Z, "Z",
             K, "K"
         )
 
@@ -73,14 +60,11 @@ class VisionOdometryLocalizer(
         val twist = odometryLocalizer.update()
         poseVelocity = twist.velocity().value()
 
-        val lieTwist = twist.value().toLieTwist2d()
-        val plusResult = liePoseEstimate.plusJacobians(lieTwist)
-        liePoseEstimate = plusResult.pose
+        val plusResult = poseEstimate.plusJacobians(twist.value())
+        poseEstimate = plusResult.pose
         J_x = plusResult.jSelf
         J_u = plusResult.jTau
 
 
     }
 }
-
- */

@@ -51,8 +51,8 @@ public class ScoringMech extends SubsystemBase {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intakeMotor.setDirection(DcMotor.Direction.REVERSE);
 
