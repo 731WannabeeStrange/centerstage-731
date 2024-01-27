@@ -20,26 +20,27 @@ public class ManualScoringCommand extends CommandBase {
     public static double MIN_SCORING_POS = 1000;
 
     private final ScoringMech scoringMechSubsystem;
-    private final BooleanSupplier intakeButton, reverseIntakeButton, scoreButton, hangButton, downButton, cancelButton;
+    private final BooleanSupplier intakeButton, reverseIntakeButton, scoreButton, hangButton, upButton, downButton, cancelButton;
     private final Rumbler rumbler;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
     private final TelemetryHandler telemetryHandler;
 
-    private double lastScoringPosition = 1600;
+    private double lastScoringPosition = 2400;
     private boolean oldUpButton = false;
     private boolean oldDownButton = false;
     private ScoringState scoringState = ScoringState.INTAKING;
 
     public ManualScoringCommand(ScoringMech scoringMechSubsystem, BooleanSupplier intakeButton,
                                 BooleanSupplier reverseIntakeButton, BooleanSupplier scoreButton,
-                                BooleanSupplier hangButton, BooleanSupplier downButton,
-                                BooleanSupplier cancelButton, Rumbler rumbler,
-                                TelemetryHandler telemetryHandler) {
+                                BooleanSupplier hangButton, BooleanSupplier upButton,
+                                BooleanSupplier downButton, BooleanSupplier cancelButton,
+                                Rumbler rumbler, TelemetryHandler telemetryHandler) {
         this.scoringMechSubsystem = scoringMechSubsystem;
         this.intakeButton = intakeButton;
         this.reverseIntakeButton = reverseIntakeButton;
         this.scoreButton = scoreButton;
         this.hangButton = hangButton;
+        this.upButton = upButton;
         this.downButton = downButton;
         this.cancelButton = cancelButton;
         this.rumbler = rumbler;
@@ -113,7 +114,7 @@ public class ManualScoringCommand extends CommandBase {
                     eTime.reset();
                 }
 
-                if (intakeButton.getAsBoolean() && !oldUpButton) {
+                if (upButton.getAsBoolean() && !oldUpButton) {
                     lastScoringPosition += SCORING_INCREMENT;
                 }
                 if (downButton.getAsBoolean() && !oldDownButton) {
@@ -121,13 +122,15 @@ public class ManualScoringCommand extends CommandBase {
                 }
                 lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_POS, ScoringMech.ELEVATOR_PARAMS.MAX_POS);
                 scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
-                oldUpButton = intakeButton.getAsBoolean();
+                oldUpButton = upButton.getAsBoolean();
                 oldDownButton = downButton.getAsBoolean();
 
                 if (cancelButton.getAsBoolean()) {
                     scoringMechSubsystem.reset();
                     scoringState = ScoringState.RESETTING;
                 }
+
+                telemetryHandler.addData("last scoring pos", lastScoringPosition);
 
                 break;
             case RELEASING:

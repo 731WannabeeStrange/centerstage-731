@@ -42,6 +42,7 @@ public class BlueTeleOp extends LinearOpMode {
                 () -> gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5,
                 () -> gamepad.getButton(GamepadKeys.Button.Y),
                 () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER),
+                () -> gamepad.getButton(GamepadKeys.Button.B),
                 () -> gamepad.getButton(GamepadKeys.Button.A),
                 () -> gamepad.getButton(GamepadKeys.Button.X),
                 rumbler, telemetryHandler));

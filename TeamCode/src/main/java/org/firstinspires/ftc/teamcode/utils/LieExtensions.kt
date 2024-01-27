@@ -20,15 +20,9 @@ fun Twist2d.rightJacobian(): DMatrix3x3 {
         )
     } else {
         DMatrix3x3(
-            sin(angle) / angle,
-            (1 - cos(angle)) / angle,
-            (angle * line.x - line.y + line.y * cos(angle) - line.x * sin(angle)) / angle.pow(2),
-            (cos(angle) - 1) / angle,
-            sin(angle) / angle,
-            (line.x + angle * line.y - line.x * cos(angle) - line.y * sin(angle)) / angle.pow(2),
-            0.0,
-            0.0,
-            1.0
+            sin(angle) / angle, (1 - cos(angle)) / angle, (angle * line.x - line.y + line.y * cos(angle) - line.x * sin(angle)) / angle.pow(2),
+            (cos(angle) - 1) / angle, sin(angle) / angle, (line.x + angle * line.y - line.x * cos(angle) - line.y * sin(angle)) / angle.pow(2),
+            0.0, 0.0, 1.0
         )
     }
 }
@@ -42,26 +36,18 @@ fun Twist2d.leftJacobian(): DMatrix3x3 {
         )
     } else {
         DMatrix3x3(
-            sin(angle) / angle,
-            (cos(angle) - 1) / angle,
-            (angle * line.x + line.y - line.y * cos(angle) - line.x * sin(angle)) / angle.pow(2),
-            (1 - cos(angle)) / angle,
-            sin(angle) / angle,
-            (-line.x + angle * line.y + line.x * cos(angle) - line.y * sin(angle)) / angle.pow(2),
-            0.0,
-            0.0,
-            1.0
+            sin(angle) / angle, (cos(angle) - 1) / angle, (angle * line.x + line.y - line.y * cos(angle) - line.x * sin(angle)) / angle.pow(2),
+            (1 - cos(angle)) / angle, sin(angle) / angle, (-line.x + angle * line.y + line.x * cos(angle) - line.y * sin(angle)) / angle.pow(2),
+            0.0, 0.0, 1.0
         )
     }
 }
 
+// check this carefully later
 fun Pose2d.adjoint(): DMatrix3x3 {
-    val angle = heading.log()
-    val s = sin(angle)
-    val c = cos(angle)
     return DMatrix3x3(
-        c, -s, -position.y,
-        s, c, position.x,
+        heading.real, -heading.imag, position.y,
+        heading.imag, heading.real, -position.x,
         0.0, 0.0, 1.0
     )
 }
@@ -85,21 +71,18 @@ fun Pose2d.inverseJacobians(): InverseResult {
 }
 
 fun Pose2d.timesJacobians(other: Vector2d): PointsComposeResult {
-    val angle = heading.log()
-    val s = sin(angle)
-    val c = cos(angle)
     val jSelf = DMatrixRMaj(
         arrayOf(
-            doubleArrayOf(c, -s, -position.x * s - position.y * c),
-            doubleArrayOf(s, c, position.x * c - position.y * s)
+            doubleArrayOf(heading.real, -heading.imag, -position.x * heading.imag - position.y * heading.real),
+            doubleArrayOf(heading.imag, heading.real, position.x * heading.real - position.y * heading.imag)
         )
     )
     return PointsComposeResult(
         times(other),
         jSelf,
         DMatrix2x2(
-            c, -s,
-            s, c
+            heading.real, -heading.imag,
+            heading.imag, heading.real
         )
     )
 }
