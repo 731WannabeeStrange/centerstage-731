@@ -14,11 +14,11 @@ public class ResetElevatorCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        scoringMechSubsystem.setElevatorHeight(0);
+        scoringMechSubsystem.reset();
     }
 
     @Override
     public boolean isFinished() {
-        return !scoringMechSubsystem.isElevatorBusy();
+        return !scoringMechSubsystem.isElevatorBusy() && scoringMechSubsystem.getLiftServoState() == ScoringMech.LiftServoState.INTAKE;
     }
 }

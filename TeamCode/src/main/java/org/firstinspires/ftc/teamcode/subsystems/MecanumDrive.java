@@ -33,10 +33,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
-import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
 import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
-import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
@@ -94,9 +92,8 @@ public class MecanumDrive extends SubsystemBase {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
+        //localizer = new AbsoluteLocalizer(new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick), startPose);
         localizer = new AbsoluteLocalizer(new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick), startPose);
-        // two-wheel for now so we can have heading without tuned odo
-        //localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick, startPose);
 
         this.telemetryHandler = telemetryHandler;
     }
@@ -435,19 +432,19 @@ public class MecanumDrive extends SubsystemBase {
         // TODO: fill in these values based on
         //   see https://ftc-docs.firstinspires.org/en/latest/programming_resources/imu/imu.html?highlight=imu#physical-hub-mounting
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
         // drive model parameters
         public double inPerTick = 0.00052843826;
-        public double lateralInPerTick = 1;
-        public double trackWidthTicks = 0;
+        public double lateralInPerTick = 0.0003669417564484584;
+        public double trackWidthTicks = 25157.344453916412;
 
         // feedforward parameters (in tick units)
-        public double kS = 0;
-        public double kV = 0;
-        public double kA = 0;
+        public double kS = 1.3779021699474985;
+        public double kV = 0.0001037930319364006;
+        public double kA = 0.000015;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -459,9 +456,9 @@ public class MecanumDrive extends SubsystemBase {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 0;
-        public double lateralGain = 0;
-        public double headingGain = 0; // shared with turn
+        public double axialGain = 1.3;
+        public double lateralGain = 1.3;
+        public double headingGain = 2; // shared with turn
 
         public double axialVelGain = 0;
         public double lateralVelGain = 0;

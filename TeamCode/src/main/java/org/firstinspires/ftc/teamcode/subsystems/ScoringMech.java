@@ -185,6 +185,10 @@ public class ScoringMech extends SubsystemBase {
                 intakeMotor.setPower(-INTAKE_PARAMS.MOTOR_POWER);
                 intakeServoPair.setPosition(INTAKE_PARAMS.REVERSE_POS);
                 break;
+            case SLOW_REVERSED:
+                intakeMotor.setPower(-INTAKE_PARAMS.OUTTAKE_POWER);
+                intakeServoPair.setPosition(INTAKE_PARAMS.REVERSE_POS);
+                break;
             case STOPPED:
                 intakeMotor.setPower(0);
                 intakeServoPair.setPosition(INTAKE_PARAMS.UP_POS);
@@ -225,6 +229,10 @@ public class ScoringMech extends SubsystemBase {
                     liftServoPair.setPosition(LIFT_SERVO_PARAMS.TRANSIT_POS);
                     bucketServo.setPosition(BUCKET_PARAMS.TRANSIT_POS);
                     break;
+                case SCORE_GROUND:
+                    liftServoPair.setPosition(LIFT_SERVO_PARAMS.SCORE_GROUND_POS);
+                    bucketServo.setPosition(BUCKET_PARAMS.SCORE_GROUND_POS);
+                    break;
                 case OUTTAKE:
                     liftServoPair.setPosition(LIFT_SERVO_PARAMS.OUTTAKE_POS);
                     bucketServo.setPosition(BUCKET_PARAMS.OUTTAKE_POS);
@@ -249,6 +257,7 @@ public class ScoringMech extends SubsystemBase {
     public enum IntakeState {
         STARTED,
         REVERSED,
+        SLOW_REVERSED,
         STOPPED
     }
 
@@ -261,6 +270,7 @@ public class ScoringMech extends SubsystemBase {
     public enum LiftServoState {
         INTAKE,
         TRANSIT,
+        SCORE_GROUND,
         OUTTAKE,
         LIFT
     }
@@ -289,21 +299,24 @@ public class ScoringMech extends SubsystemBase {
 
     public static class IntakeParams {
         public double MOTOR_POWER = 0.9;
+        public double OUTTAKE_POWER = 0.7;
         public double UP_POS = 0.25;
         public double REVERSE_POS = 0.4;
         public double DOWN_POS = 0.75;
     }
 
     public static class LiftServoParams {
-        public double INTAKE_POS = 0.66;
+        public double INTAKE_POS = 0.67;
         public double TRANSIT_POS = 0.5;
+        public double SCORE_GROUND_POS = 0.68;
         public double OUTTAKE_POS = 0.2;
         public double HANG_POS = 0.2;
     }
 
     public static class BucketParams {
-        public double INTAKE_POS = 0.32;
+        public double INTAKE_POS = 0.3;
         public double TRANSIT_POS = 0.55;
+        public double SCORE_GROUND_POS = 0.31;
         public double OUTTAKE_POS = 0.57;
         public double HANG_POS = 0.83;
         public double WHEEL_POWER = 1;

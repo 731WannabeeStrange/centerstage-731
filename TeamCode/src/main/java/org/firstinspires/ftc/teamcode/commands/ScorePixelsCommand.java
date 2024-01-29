@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 @Config
 public class ScorePixelsCommand extends CommandBase {
     private final ScoringMech scoringMechSubsystem;
-    private final double fraction;
+    private final double height;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
     private enum ScoreState {
@@ -19,16 +19,16 @@ public class ScorePixelsCommand extends CommandBase {
     }
     private ScoreState scoreState = ScoreState.GOING_UP;
 
-    public ScorePixelsCommand(double fraction, ScoringMech scoringMechSubsystem) {
+    public ScorePixelsCommand(double height, ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
-        this.fraction = fraction;
+        this.height = height;
 
         addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
-        scoringMechSubsystem.setElevatorHeight(fraction);
+        scoringMechSubsystem.setElevatorHeight(height);
     }
 
     @Override
@@ -38,14 +38,14 @@ public class ScorePixelsCommand extends CommandBase {
                 if (scoringMechSubsystem.canLiftServosExtend()) {
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
                 }
-                if (scoringMechSubsystem.isElevatorBusy()) {
+                if (!scoringMechSubsystem.isElevatorBusy()) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.OUTTAKE);
                     eTime.reset();
                     scoreState = ScoreState.RELEASING;
                 }
                 break;
             case RELEASING:
-                if (eTime.time() > 0.6) {
+                if (eTime.time() > 0.4) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoreState = ScoreState.IDLE;
                 }

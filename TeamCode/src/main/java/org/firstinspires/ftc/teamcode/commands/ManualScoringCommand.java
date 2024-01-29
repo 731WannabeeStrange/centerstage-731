@@ -14,6 +14,7 @@ import java.util.function.BooleanSupplier;
 @Config
 public class ManualScoringCommand extends CommandBase {
     public static double RELEASE_TIME = 0.3;
+    public static double WAIT_COLOR_SENSOR_TIME = 0.3;
     public static double LIFT_UP_POS = 2000;
     public static double LIFT_DOWN_POS = 150;
     public static double SCORING_INCREMENT = 150;
@@ -136,10 +137,15 @@ public class ManualScoringCommand extends CommandBase {
             case RELEASING:
                 if (eTime.time() > RELEASE_TIME) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    scoringState = ScoringState.WAIT_FOR_COLOR_SENSOR;
+                    eTime.reset();
+                }
+                break;
+            case WAIT_FOR_COLOR_SENSOR:
+                if (eTime.time() > WAIT_COLOR_SENSOR_TIME) {
                     if (scoringMechSubsystem.getNumPixelsInBucket() > 0) {
                         scoringState = ScoringState.SCORING;
                     } else {
-                        scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                         scoringMechSubsystem.reset();
                         scoringState = ScoringState.RESETTING;
                     }
@@ -186,6 +192,7 @@ public class ManualScoringCommand extends CommandBase {
         ELEVATE_TO_SCORE,
         SCORING,
         RELEASING,
+        WAIT_FOR_COLOR_SENSOR,
         ELEVATE_TO_HANG,
         WAITING_FOR_HANG,
         HANGING,

@@ -8,18 +8,18 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 @Config
 public class RaiseElevatorCommand extends CommandBase {
     private final ScoringMech scoringMechSubsystem;
-    private final double fraction;
+    private final double height;
 
-    public RaiseElevatorCommand(double fraction, ScoringMech scoringMechSubsystem) {
+    public RaiseElevatorCommand(double height, ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
-        this.fraction = fraction;
+        this.height = height;
 
         addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
-        scoringMechSubsystem.setElevatorHeight(fraction);
+        scoringMechSubsystem.setElevatorHeight(height);
     }
 
     @Override
