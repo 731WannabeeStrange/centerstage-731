@@ -22,8 +22,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @Config
 public final class TwoDeadWheelLocalizer implements IncrementalLocalizer {
     public static class Params {
-        public double parYTicks = 8151.977334080555; // y position of the parallel encoder (in tick units)
-        public double perpXTicks = 7655.8820709207075; // x position of the perpendicular encoder (in tick units)
+        public double parYTicks = -7776.154042686053; // y position of the parallel encoder (in tick units)
+        public double perpXTicks = 7886.238360505399; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -39,10 +39,10 @@ public final class TwoDeadWheelLocalizer implements IncrementalLocalizer {
     private double lastRawHeadingVel, headingVelOffset;
 
     public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, double inPerTick) {
-        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightFront")));
+        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightOdo")));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightBack")));
 
-        par.setDirection(DcMotorSimple.Direction.REVERSE);
+        //par.setDirection(DcMotorSimple.Direction.REVERSE);
         perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         this.imu = imu;

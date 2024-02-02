@@ -35,6 +35,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
 import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
+import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
@@ -438,12 +439,12 @@ public class MecanumDrive extends SubsystemBase {
 
         // drive model parameters
         public double inPerTick = 0.00052843826;
-        public double lateralInPerTick = 0.0003669417564484584;
-        public double trackWidthTicks = 25157.344453916412;
+        public double lateralInPerTick = 0.00040076792109289977;
+        public double trackWidthTicks = 25318.109773362918;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.3779021699474985;
-        public double kV = 0.0001037930319364006;
+        public double kS = 1.4336678836467853;
+        public double kV = 0.00010297948239871823;
         public double kA = 0.000015;
 
         // path profile parameters (in inches)
@@ -456,9 +457,9 @@ public class MecanumDrive extends SubsystemBase {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 1.3;
-        public double lateralGain = 1.3;
-        public double headingGain = 2; // shared with turn
+        public double axialGain = 2.5;
+        public double lateralGain = 2.5;
+        public double headingGain = 3.7; // shared with turn
 
         public double axialVelGain = 0;
         public double lateralVelGain = 0;

@@ -45,7 +45,7 @@ public class ScorePixelsCommand extends CommandBase {
                 }
                 break;
             case RELEASING:
-                if (eTime.time() > 0.4) {
+                if (eTime.time() > 0.5) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoreState = ScoreState.IDLE;
                 }

@@ -18,9 +18,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Config
 public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
     public static class Params {
-        public double par0YTicks = 8151.977334080555; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = -7292.687716660954; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = 7655.8820709207075; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = 7526.320931993838; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = -8145.292312544867; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = 7811.3792025160965; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -35,7 +35,7 @@ public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightFront")));
+        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "leftFront")));
         par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightOdo")));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightBack")));
 

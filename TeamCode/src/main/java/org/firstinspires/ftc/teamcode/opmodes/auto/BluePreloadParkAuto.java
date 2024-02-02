@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.auto;
 import android.util.Size;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
@@ -46,15 +47,15 @@ public class BluePreloadParkAuto extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(52, 12, -Math.PI/2), 0)
                 .build();
 
-        Command middleCommand = drive.commandBuilder(drive.pose)
-                .lineToYConstantHeading(45)
+        Command middleCommand = drive.pathCommandBuilder(drive.pose)
+                .splineToConstantHeading(new Vector2d(19, 44), -Math.PI / 2)
+                .splineToLinearHeading(new Pose2d(23, 24, 0), -Math.PI / 2)
                 .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
-                .splineToLinearHeading(new Pose2d(36, 34, 0), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new ScorePixelsCommand(2800, scoringMech),
-                        new ResetElevatorCommand(scoringMech)
-                ))
-                .splineToLinearHeading(new Pose2d(52, 12, -Math.PI/2), 0)
+                .splineToLinearHeading(new Pose2d(43, 37.5, 0), 0)
+                .stopAndAdd(new ScorePixelsCommand(1600, scoringMech))
+                .splineToConstantHeading(new Vector2d(38, 24), -Math.PI / 2)
+                .afterTime(0.5, new ResetElevatorCommand(scoringMech))
+                .splineToLinearHeading(new Pose2d(48, 15, -Math.PI/2), -Math.PI / 2)
                 .build();
 
         Command leftCommand = drive.commandBuilder(drive.pose)
