@@ -30,7 +30,8 @@ public class ScorePixelsGroundCommand extends CommandBase {
     @Override
     public void initialize() {
         scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.SCORE_GROUND);
-        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.SLOW_REVERSED);
+        scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+        scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.OUTTAKE_POWER);
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.OUTTAKE);
         elapsedTime.reset();
     }
@@ -47,7 +48,8 @@ public class ScorePixelsGroundCommand extends CommandBase {
                 break;
             case INTAKE:
                 if (elapsedTime.time() > INTAKE_RELEASE_TIME) {
-                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STOPPED);
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.UP_POS);
+                    scoringMechSubsystem.setIntakePower(0);
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.INTAKE);
                     scoreGroundState = ScoreGroundState.IDLE;
                 }

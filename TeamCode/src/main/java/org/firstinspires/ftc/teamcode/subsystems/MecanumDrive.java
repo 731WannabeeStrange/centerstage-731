@@ -35,7 +35,6 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
 import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
-import org.firstinspires.ftc.teamcode.utils.localization.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
 
 import java.util.Arrays;
@@ -286,6 +285,10 @@ public class MecanumDrive extends SubsystemBase {
 
         @Override
         public void execute() {
+            disp = trajectory.project(pose.position, disp);
+            Pose2dDual<Time> txWorldTarget = trajectory.get(disp);
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+
             if (disp + 1 >= trajectory.length()) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
@@ -296,8 +299,6 @@ public class MecanumDrive extends SubsystemBase {
                 return;
             }
 
-            disp = trajectory.project(pose.position, disp);
-            Pose2dDual<Time> txWorldTarget = trajectory.get(disp);
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
@@ -319,8 +320,6 @@ public class MecanumDrive extends SubsystemBase {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
-            // write error to telemetry
-            Pose2d error = txWorldTarget.value().minusExp(pose);
             telemetryHandler.addData("x error", error.position.x);
             telemetryHandler.addData("y error", error.position.y);
             telemetryHandler.addData("heading error (deg)", Math.toDegrees(error.heading.log()));
@@ -457,8 +456,8 @@ public class MecanumDrive extends SubsystemBase {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 2.5;
-        public double lateralGain = 2.5;
+        public double axialGain = 3;
+        public double lateralGain = 3;
         public double headingGain = 3.7; // shared with turn
 
         public double axialVelGain = 0;

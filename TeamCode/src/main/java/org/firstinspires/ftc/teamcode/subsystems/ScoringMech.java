@@ -175,6 +175,7 @@ public class ScoringMech extends SubsystemBase {
         }
     }
 
+    /*
     public void setIntakeState(IntakeState intakeState) {
         switch (intakeState) {
             case STARTED:
@@ -194,6 +195,19 @@ public class ScoringMech extends SubsystemBase {
                 intakeServoPair.setPosition(INTAKE_PARAMS.UP_POS);
                 break;
         }
+    }
+     */
+
+    public void setIntakePosition(double position) {
+        intakeServoPair.setPosition(position);
+    }
+
+    public void setIntakePower(double power) {
+        intakeMotor.setPower(power);
+    }
+
+    public double getFrontColor() {
+        return frontColorSensor.getDistance(DistanceUnit.INCH);
     }
 
     public int getNumPixelsInBucket() {
@@ -252,13 +266,6 @@ public class ScoringMech extends SubsystemBase {
 
     public boolean isElevatorBusy() {
         return areLiftMotorsBusy() || scoringMechState != ScoringMechState.ACTIVE;
-    }
-
-    public enum IntakeState {
-        STARTED,
-        REVERSED,
-        SLOW_REVERSED,
-        STOPPED
     }
 
     public enum WheelState {

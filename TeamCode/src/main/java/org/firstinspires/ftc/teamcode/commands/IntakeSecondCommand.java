@@ -6,13 +6,13 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 @Config
-public class IntakePixelsCommand extends CommandBase {
+public class IntakeSecondCommand extends CommandBase {
     public static double POSITION = 0.75;
     public static double POWER = 0.9;
 
     private final ScoringMech scoringMechSubsystem;
 
-    public IntakePixelsCommand(ScoringMech scoringMechSubsystem) {
+    public IntakeSecondCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
 
         addRequirements(scoringMechSubsystem);

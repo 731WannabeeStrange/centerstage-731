@@ -56,12 +56,14 @@ public class ManualScoringCommand extends CommandBase {
             case IDLE:
                 if (intakeButton.getAsBoolean()) {
                     if (reverseIntakeButton.getAsBoolean()) {
-                        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.REVERSED);
+                        scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+                        scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
                         scoringState = ScoringState.REVERSE_INTAKE;
                     } else if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
                         rumbler.rumble(500);
                     } else {
-                        scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STARTED);
+                        scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.DOWN_POS);
+                        scoringMechSubsystem.setIntakePower(ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
                         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
                         scoringState = ScoringState.INTAKING;
                     }
@@ -77,21 +79,25 @@ public class ManualScoringCommand extends CommandBase {
                 break;
             case INTAKING:
                 if (!intakeButton.getAsBoolean() || scoringMechSubsystem.getNumPixelsInBucket() == 2) {
-                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STOPPED);
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.UP_POS);
+                    scoringMechSubsystem.setIntakePower(0);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.IDLE;
                 } else if (reverseIntakeButton.getAsBoolean()) {
-                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.REVERSED);
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+                    scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.REVERSE_INTAKE;
                 }
                 break;
             case REVERSE_INTAKE:
                 if (!intakeButton.getAsBoolean()) {
-                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STOPPED);
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.UP_POS);
+                    scoringMechSubsystem.setIntakePower(0);
                     scoringState = ScoringState.IDLE;
                 } else if (!reverseIntakeButton.getAsBoolean()) {
-                    scoringMechSubsystem.setIntakeState(ScoringMech.IntakeState.STARTED);
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.DOWN_POS);
+                    scoringMechSubsystem.setIntakePower(ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
                     scoringState = ScoringState.INTAKING;
                 }
