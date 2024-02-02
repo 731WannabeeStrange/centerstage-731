@@ -13,11 +13,11 @@ import java.util.function.BooleanSupplier;
 
 @Config
 public class ManualScoringCommand extends CommandBase {
-    public static double RELEASE_TIME = 0.3;
+    public static double RELEASE_TIME = 0.4;
     public static double WAIT_COLOR_SENSOR_TIME = 0.3;
     public static double LIFT_UP_POS = 2000;
     public static double LIFT_DOWN_POS = 150;
-    public static double SCORING_INCREMENT = 150;
+    public static double SCORING_INCREMENT = 300;
     public static double MIN_SCORING_POS = 1000;
 
     private final ScoringMech scoringMechSubsystem;
@@ -27,8 +27,7 @@ public class ManualScoringCommand extends CommandBase {
     private final TelemetryHandler telemetryHandler;
 
     private double lastScoringPosition = 2400;
-    private boolean oldUpButton = false;
-    private boolean oldDownButton = false;
+    private boolean oldUpButton = false, oldDownButton = false, oldScoreButton = false, oldHangButton = false;
     private ScoringState scoringState = ScoringState.INTAKING;
 
     public ManualScoringCommand(ScoringMech scoringMechSubsystem, BooleanSupplier intakeButton,
@@ -70,11 +69,11 @@ public class ManualScoringCommand extends CommandBase {
                 }
                 if (scoreButton.getAsBoolean() && scoringMechSubsystem.getNumPixelsInBucket() > 0) {
                     scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
-                    scoringState = ScoringState.ELEVATE_TO_SCORE;
+                    scoringState = ScoringState.SCORING;
                 }
                 if (hangButton.getAsBoolean()) {
                     scoringMechSubsystem.setElevatorHeight(LIFT_UP_POS);
-                    scoringState = ScoringState.ELEVATE_TO_HANG;
+                    scoringState = ScoringState.HANGING;
                 }
                 break;
             case INTAKING:
@@ -102,17 +101,12 @@ public class ManualScoringCommand extends CommandBase {
                     scoringState = ScoringState.INTAKING;
                 }
                 break;
-            case ELEVATE_TO_SCORE:
-                if (!scoreButton.getAsBoolean()) {
-                    scoringState = ScoringState.SCORING;
-                }
-                break;
             case SCORING:
                 if (scoringMechSubsystem.canLiftServosExtend()) {
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
                 }
 
-                if (scoreButton.getAsBoolean() && !scoringMechSubsystem.isElevatorBusy()) {
+                if (scoreButton.getAsBoolean() && !oldScoreButton && !scoringMechSubsystem.isElevatorBusy()) {
                     oldUpButton = false;
                     oldDownButton = false;
 
@@ -129,8 +123,6 @@ public class ManualScoringCommand extends CommandBase {
                 }
                 lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_POS, ScoringMech.ELEVATOR_PARAMS.MAX_POS);
                 scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
-                oldUpButton = upButton.getAsBoolean();
-                oldDownButton = downButton.getAsBoolean();
 
                 if (cancelButton.getAsBoolean()) {
                     scoringMechSubsystem.reset();
@@ -157,16 +149,11 @@ public class ManualScoringCommand extends CommandBase {
                     }
                 }
                 break;
-            case ELEVATE_TO_HANG:
-                if (!hangButton.getAsBoolean()) {
-                    scoringState = ScoringState.WAITING_FOR_HANG;
-                }
-                break;
             case WAITING_FOR_HANG:
                 if (scoringMechSubsystem.canLiftServosExtend()) {
                     scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
                 }
-                if (hangButton.getAsBoolean() && !scoringMechSubsystem.isElevatorBusy()) {
+                if (hangButton.getAsBoolean() && !oldHangButton && !scoringMechSubsystem.isElevatorBusy()) {
                     scoringMechSubsystem.setElevatorHeight(LIFT_DOWN_POS);
                     scoringState = ScoringState.HANGING;
                 }
@@ -188,6 +175,11 @@ public class ManualScoringCommand extends CommandBase {
                 break;
         }
 
+        oldUpButton = upButton.getAsBoolean();
+        oldDownButton = downButton.getAsBoolean();
+        oldHangButton = hangButton.getAsBoolean();
+        oldScoreButton = scoreButton.getAsBoolean();
+
         telemetryHandler.addData("scoring state", scoringState);
     }
 
@@ -195,11 +187,9 @@ public class ManualScoringCommand extends CommandBase {
         IDLE,
         INTAKING,
         REVERSE_INTAKE,
-        ELEVATE_TO_SCORE,
         SCORING,
         RELEASING,
         WAIT_FOR_COLOR_SENSOR,
-        ELEVATE_TO_HANG,
         WAITING_FOR_HANG,
         HANGING,
         RESETTING

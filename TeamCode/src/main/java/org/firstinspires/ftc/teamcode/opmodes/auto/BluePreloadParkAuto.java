@@ -49,13 +49,13 @@ public class BluePreloadParkAuto extends LinearOpMode {
 
         Command middleCommand = drive.pathCommandBuilder(drive.pose)
                 .splineToConstantHeading(new Vector2d(19, 44), -Math.PI / 2)
-                .splineToLinearHeading(new Pose2d(23, 24, 0), -Math.PI / 2)
+                .splineToSplineHeading(new Pose2d(23, 24, 0), -Math.PI / 2)
                 .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
-                .splineToLinearHeading(new Pose2d(43, 37.5, 0), 0)
+                .splineToConstantHeading(new Vector2d(43, 37.5), 0)
                 .stopAndAdd(new ScorePixelsCommand(1600, scoringMech))
+                .afterDisp(3, new ResetElevatorCommand(scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 24), -Math.PI / 2)
-                .afterTime(0.5, new ResetElevatorCommand(scoringMech))
-                .splineToLinearHeading(new Pose2d(48, 15, -Math.PI/2), -Math.PI / 2)
+                .splineToSplineHeading(new Pose2d(48, 15, -Math.PI/2), -Math.PI / 2)
                 .build();
 
         Command leftCommand = drive.commandBuilder(drive.pose)
@@ -84,7 +84,7 @@ public class BluePreloadParkAuto extends LinearOpMode {
             telemetryHandler.update();
         }
 
-        visionPortal.setProcessorEnabled(teamPropProcessor, false);
+        visionPortal.stopStreaming();
         switch (selected) {
             case NONE:
             case RIGHT:

@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.ManualScoringCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
+import org.firstinspires.ftc.teamcode.utils.PoseStorage;
 import org.firstinspires.ftc.teamcode.utils.Rumbler;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
@@ -32,7 +33,7 @@ public class BlueTeleOp extends LinearOpMode {
 
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
 
-        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
+        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, PoseStorage.currentPose != null ? PoseStorage.currentPose : startPose, telemetryHandler);
         ScoringMech scoringMechSubsystem = new ScoringMech(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
         Rumbler rumbler = new Rumbler(gamepad1);
@@ -71,6 +72,7 @@ public class BlueTeleOp extends LinearOpMode {
             telemetryHandler.update();
         }
 
+        PoseStorage.currentPose = null;
         CommandScheduler.getInstance().reset();
     }
 }
