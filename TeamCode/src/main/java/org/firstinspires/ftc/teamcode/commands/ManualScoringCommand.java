@@ -13,7 +13,8 @@ import java.util.function.BooleanSupplier;
 
 @Config
 public class ManualScoringCommand extends CommandBase {
-    public static double RELEASE_TIME = 0.4;
+    public static double FIRST_RELEASE_TIME = 0.4;
+    public static double SECOND_RELEASE_TIME = 0.6;
     public static double WAIT_COLOR_SENSOR_TIME = 0.3;
     public static double LIFT_UP_POS = 2000;
     public static double LIFT_DOWN_POS = 150;
@@ -73,7 +74,7 @@ public class ManualScoringCommand extends CommandBase {
                 }
                 if (hangButton.getAsBoolean()) {
                     scoringMechSubsystem.setElevatorHeight(LIFT_UP_POS);
-                    scoringState = ScoringState.HANGING;
+                    scoringState = ScoringState.WAITING_FOR_HANG;
                 }
                 break;
             case INTAKING:
@@ -110,8 +111,13 @@ public class ManualScoringCommand extends CommandBase {
                     oldUpButton = false;
                     oldDownButton = false;
 
+                    if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
+                        scoringState = ScoringState.FIRST_RELEASE;
+                    } else {
+                        scoringState = ScoringState.SECOND_RELEASE;
+                    }
+
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.OUTTAKE);
-                    scoringState = ScoringState.RELEASING;
                     eTime.reset();
                 }
 
@@ -132,11 +138,18 @@ public class ManualScoringCommand extends CommandBase {
                 telemetryHandler.addData("last scoring pos", lastScoringPosition);
 
                 break;
-            case RELEASING:
-                if (eTime.time() > RELEASE_TIME) {
+            case FIRST_RELEASE:
+                if (eTime.time() > FIRST_RELEASE_TIME) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.WAIT_FOR_COLOR_SENSOR;
                     eTime.reset();
+                }
+                break;
+            case SECOND_RELEASE:
+                if (eTime.time() > SECOND_RELEASE_TIME) {
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    scoringMechSubsystem.reset();
+                    scoringState = ScoringState.RESETTING;
                 }
                 break;
             case WAIT_FOR_COLOR_SENSOR:
@@ -188,7 +201,8 @@ public class ManualScoringCommand extends CommandBase {
         INTAKING,
         REVERSE_INTAKE,
         SCORING,
-        RELEASING,
+        FIRST_RELEASE,
+        SECOND_RELEASE,
         WAIT_FOR_COLOR_SENSOR,
         WAITING_FOR_HANG,
         HANGING,

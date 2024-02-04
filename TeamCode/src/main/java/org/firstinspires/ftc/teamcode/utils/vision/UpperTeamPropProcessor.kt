@@ -13,11 +13,11 @@ import org.opencv.imgproc.Imgproc
 import kotlin.math.roundToInt
 
 @Config
-class TeamPropProcessor : VisionProcessor {
+class UpperTeamPropProcessor : VisionProcessor {
     private var submat = Mat()
     private var hsvMat = Mat()
-    private val rectLeft = Rect(245, 575, 40, 40)
-    private val rectMiddle = Rect(800, 525, 40, 40)
+    private val rectLeft = Rect(425, 625, 40, 40)
+    private val rectMiddle = Rect(875, 575, 40, 40)
 
     companion object {
         @JvmStatic
@@ -35,10 +35,10 @@ class TeamPropProcessor : VisionProcessor {
         val satRectMiddle = getAvgSaturation(hsvMat, rectMiddle)
 
         if (satRectLeft > SAT_THRESHOLD && satRectMiddle > SAT_THRESHOLD) {
-            if (satRectLeft > satRectMiddle) {
-                return Selected.LEFT
+            return if (satRectLeft > satRectMiddle) {
+                Selected.LEFT
             } else {
-                return Selected.MIDDLE
+                Selected.MIDDLE
             }
         } else if (satRectLeft > SAT_THRESHOLD) {
             return Selected.LEFT
@@ -104,12 +104,5 @@ class TeamPropProcessor : VisionProcessor {
                 canvas.drawRect(drawRectangleMiddle, nonSelectedPaint)
             }
         }
-    }
-
-    enum class Selected {
-        NONE,
-        LEFT,
-        MIDDLE,
-        RIGHT
     }
 }

@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 @Config
 public class ScorePixelsGroundCommand extends CommandBase {
     public static double BUCKET_RELEASE_TIME = 0.4;
-    public static double INTAKE_RELEASE_TIME = 1.4;
+    public static double INTAKE_RELEASE_TIME = 1;
 
     private final ScoringMech scoringMechSubsystem;
     private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);

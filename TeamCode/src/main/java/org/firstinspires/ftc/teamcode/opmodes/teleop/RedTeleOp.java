@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.ManualScoringCommand;
+import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.PoseStorage;
@@ -35,6 +36,7 @@ public class RedTeleOp extends LinearOpMode {
 
         MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, PoseStorage.currentPose != null ? PoseStorage.currentPose : startPose, telemetryHandler);
         ScoringMech scoringMechSubsystem = new ScoringMech(hardwareMap, telemetryHandler);
+        DroneLauncher droneLauncher = new DroneLauncher(hardwareMap);
         GamepadEx gamepad = new GamepadEx(gamepad1);
         Rumbler rumbler = new Rumbler(gamepad1);
 
@@ -56,6 +58,8 @@ public class RedTeleOp extends LinearOpMode {
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT),
                 ManualDriveCommand.FieldOrientation.RED,
                 telemetryHandler));
+        gamepad.getGamepadButton(GamepadKeys.Button.BACK).and(gamepad.getGamepadButton(GamepadKeys.Button.START))
+                .whenActive(droneLauncher::launchDrone);
 
         waitForStart();
 

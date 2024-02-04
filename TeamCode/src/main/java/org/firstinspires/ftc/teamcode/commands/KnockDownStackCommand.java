@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 @Config
 public class KnockDownStackCommand extends CommandBase {
-    public static double TIME = 0.8;
+    public static double TIME = 1;
     public static double INTAKE_POWER = 0.45;
 
     private final ScoringMech scoringMechSubsystem;

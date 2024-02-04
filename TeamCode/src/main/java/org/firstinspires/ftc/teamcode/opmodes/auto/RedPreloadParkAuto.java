@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.TeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.vision.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.List;
@@ -60,7 +60,7 @@ public class RedPreloadParkAuto extends LinearOpMode {
                 .afterTime(0, new ResetElevatorCommand(scoringMech))
                 .build();
 
-        TeamPropProcessor teamPropProcessor = new TeamPropProcessor();
+        UpperTeamPropProcessor teamPropProcessor = new UpperTeamPropProcessor();
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setStreamFormat(VisionPortal.StreamFormat.YUY2)

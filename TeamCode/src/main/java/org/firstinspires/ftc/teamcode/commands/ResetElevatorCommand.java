@@ -9,7 +9,7 @@ public class ResetElevatorCommand extends CommandBase {
     public ResetElevatorCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
 
-        addRequirements(scoringMechSubsystem);
+        //addRequirements(scoringMechSubsystem);
     }
 
     @Override

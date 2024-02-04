@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
@@ -9,8 +10,10 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 public class IntakeSecondCommand extends CommandBase {
     public static double POSITION = 0.75;
     public static double POWER = 0.9;
+    public static double TIMEOUT = 1.75;
 
     private final ScoringMech scoringMechSubsystem;
+    private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 
     public IntakeSecondCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
@@ -23,11 +26,12 @@ public class IntakeSecondCommand extends CommandBase {
         scoringMechSubsystem.setIntakePosition(POSITION);
         scoringMechSubsystem.setIntakePower(POWER);
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
+        elapsedTime.reset();
     }
 
     @Override
     public boolean isFinished() {
-        return scoringMechSubsystem.getNumPixelsInBucket() == 2;
+        return scoringMechSubsystem.getNumPixelsInBucket() == 2 || elapsedTime.time() > TIMEOUT;
     }
 
     @Override

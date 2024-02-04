@@ -7,16 +7,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.TeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.vision.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @TeleOp
-public class TeamPropTestOpMode extends LinearOpMode {
+public class UpperTeamPropTestOpMode extends LinearOpMode {
     private final TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
 
     @Override
     public void runOpMode() throws InterruptedException {
-        TeamPropProcessor teamPropProcessor = new TeamPropProcessor();
+        UpperTeamPropProcessor teamPropProcessor = new UpperTeamPropProcessor();
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setStreamFormat(VisionPortal.StreamFormat.YUY2)

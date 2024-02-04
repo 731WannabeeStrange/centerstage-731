@@ -8,6 +8,9 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 @Config
 public class ScorePixelsCommand extends CommandBase {
+    public static double RELEASE_TIME = 0.55;
+    public static double WAIT_TIME = 0.1;
+
     private final ScoringMech scoringMechSubsystem;
     private final double height;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
@@ -15,6 +18,7 @@ public class ScorePixelsCommand extends CommandBase {
     private enum ScoreState {
         GOING_UP,
         RELEASING,
+        WAITING,
         IDLE
     }
     private ScoreState scoreState = ScoreState.GOING_UP;
@@ -45,8 +49,14 @@ public class ScorePixelsCommand extends CommandBase {
                 }
                 break;
             case RELEASING:
-                if (eTime.time() > 0.5) {
+                if (eTime.time() > RELEASE_TIME) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    eTime.reset();
+                    scoreState = ScoreState.WAITING;
+                }
+                break;
+            case WAITING:
+                if (eTime.time() > WAIT_TIME) {
                     scoreState = ScoreState.IDLE;
                 }
                 break;

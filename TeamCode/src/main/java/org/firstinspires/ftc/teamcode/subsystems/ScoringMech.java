@@ -104,6 +104,12 @@ public class ScoringMech extends SubsystemBase {
                     elapsedTime.reset();
                 }
                 break;
+            case WAIT_FOR_SERVO:
+                if (elapsedTime.time() > LIFT_SERVO_PARAMS.OUTTAKE_RESET_TIME) {
+                    setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS);
+                    scoringMechState = ScoringMechState.TRANSIT;
+                }
+                break;
             case TRANSIT:
                 if (!areLiftMotorsBusy()) {
                     liftServoPair.setPosition(LIFT_SERVO_PARAMS.INTAKE_POS);
@@ -147,9 +153,9 @@ public class ScoringMech extends SubsystemBase {
             setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS + 300);
             scoringMechState = ScoringMechState.WAITING_FOR_TRANSIT_POS;
         } else {
-            setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS);
             setLiftServoState(LiftServoState.TRANSIT);
-            scoringMechState = ScoringMechState.TRANSIT;
+            elapsedTime.reset();
+            scoringMechState = ScoringMechState.WAIT_FOR_SERVO;
         }
     }
 
@@ -286,6 +292,7 @@ public class ScoringMech extends SubsystemBase {
         ACTIVE,
         WAITING_FOR_TRANSIT_POS,
         WAITING_FOR_TRANSIT_SERVO,
+        WAIT_FOR_SERVO,
         TRANSIT,
         WAITING_ON_SERVOS,
         RESETTING
@@ -318,6 +325,7 @@ public class ScoringMech extends SubsystemBase {
         public double SCORE_GROUND_POS = 0.68;
         public double OUTTAKE_POS = 0.2;
         public double HANG_POS = 0.2;
+        public double OUTTAKE_RESET_TIME = 0.3;
     }
 
     public static class BucketParams {
@@ -328,6 +336,6 @@ public class ScoringMech extends SubsystemBase {
         public double HANG_POS = 0.83;
         public double WHEEL_POWER = 1;
         public double BACK_COLOR_THRESHOLD = 0.5;
-        public double FRONT_COLOR_THRESHOLD = 1.0;
+        public double FRONT_COLOR_THRESHOLD = 1.15;
     }
 }
