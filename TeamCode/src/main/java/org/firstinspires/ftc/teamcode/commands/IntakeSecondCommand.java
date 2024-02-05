@@ -31,7 +31,7 @@ public class IntakeSecondCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return scoringMechSubsystem.getNumPixelsInBucket() == 2 || elapsedTime.time() > TIMEOUT;
+        return (scoringMechSubsystem.isFrontColorBlocked() && scoringMechSubsystem.isBackColorBlocked()) || elapsedTime.time() > TIMEOUT;
     }
 
     @Override

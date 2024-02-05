@@ -14,8 +14,8 @@ import java.util.function.BooleanSupplier;
 @Config
 public class ManualScoringCommand extends CommandBase {
     public static double FIRST_RELEASE_TIME = 0.4;
-    public static double SECOND_RELEASE_TIME = 0.6;
-    public static double WAIT_COLOR_SENSOR_TIME = 0.3;
+    public static double SECOND_RELEASE_TIME = 1;
+    public static double WAIT_COLOR_SENSOR_TIME = 0.6;
     public static double LIFT_UP_POS = 2000;
     public static double LIFT_DOWN_POS = 150;
     public static double SCORING_INCREMENT = 300;
@@ -27,6 +27,7 @@ public class ManualScoringCommand extends CommandBase {
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
     private final TelemetryHandler telemetryHandler;
 
+    private int numPixelsInBucket = 0;
     private double lastScoringPosition = 2400;
     private boolean oldUpButton = false, oldDownButton = false, oldScoreButton = false, oldHangButton = false;
     private ScoringState scoringState = ScoringState.INTAKING;
@@ -59,7 +60,7 @@ public class ManualScoringCommand extends CommandBase {
                         scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
                         scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
                         scoringState = ScoringState.REVERSE_INTAKE;
-                    } else if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
+                    } else if (numPixelsInBucket == 2) {
                         rumbler.rumble(500);
                     } else {
                         scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.DOWN_POS);
@@ -68,7 +69,7 @@ public class ManualScoringCommand extends CommandBase {
                         scoringState = ScoringState.INTAKING;
                     }
                 }
-                if (scoreButton.getAsBoolean() && scoringMechSubsystem.getNumPixelsInBucket() > 0) {
+                if (scoreButton.getAsBoolean() && numPixelsInBucket > 0) {
                     scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
                     scoringState = ScoringState.SCORING;
                 }
@@ -78,7 +79,7 @@ public class ManualScoringCommand extends CommandBase {
                 }
                 break;
             case INTAKING:
-                if (!intakeButton.getAsBoolean() || scoringMechSubsystem.getNumPixelsInBucket() == 2) {
+                if (!intakeButton.getAsBoolean() || numPixelsInBucket == 2) {
                     scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.UP_POS);
                     scoringMechSubsystem.setIntakePower(0);
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
@@ -111,7 +112,7 @@ public class ManualScoringCommand extends CommandBase {
                     oldUpButton = false;
                     oldDownButton = false;
 
-                    if (scoringMechSubsystem.getNumPixelsInBucket() == 2) {
+                    if (numPixelsInBucket == 2) {
                         scoringState = ScoringState.FIRST_RELEASE;
                     } else {
                         scoringState = ScoringState.SECOND_RELEASE;
@@ -142,6 +143,7 @@ public class ManualScoringCommand extends CommandBase {
                 if (eTime.time() > FIRST_RELEASE_TIME) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.WAIT_FOR_COLOR_SENSOR;
+                    numPixelsInBucket = 1;
                     eTime.reset();
                 }
                 break;
@@ -149,12 +151,13 @@ public class ManualScoringCommand extends CommandBase {
                 if (eTime.time() > SECOND_RELEASE_TIME) {
                     scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringMechSubsystem.reset();
+                    numPixelsInBucket = 0;
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
             case WAIT_FOR_COLOR_SENSOR:
                 if (eTime.time() > WAIT_COLOR_SENSOR_TIME) {
-                    if (scoringMechSubsystem.getNumPixelsInBucket() > 0) {
+                    if (numPixelsInBucket > 0) {
                         scoringState = ScoringState.SCORING;
                     } else {
                         scoringMechSubsystem.reset();
@@ -188,12 +191,19 @@ public class ManualScoringCommand extends CommandBase {
                 break;
         }
 
+        if (numPixelsInBucket == 0 && scoringMechSubsystem.isFrontColorBlocked() && scoringState != ScoringState.RESETTING) {
+            numPixelsInBucket = 1;
+        } else if (scoringMechSubsystem.isFrontColorBlocked() && scoringMechSubsystem.isBackColorBlocked()) {
+            numPixelsInBucket = 2;
+        }
+
         oldUpButton = upButton.getAsBoolean();
         oldDownButton = downButton.getAsBoolean();
         oldHangButton = hangButton.getAsBoolean();
         oldScoreButton = scoreButton.getAsBoolean();
 
         telemetryHandler.addData("scoring state", scoringState);
+        telemetryHandler.addData("num pixels in bucket", numPixelsInBucket);
     }
 
     private enum ScoringState {

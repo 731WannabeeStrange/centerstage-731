@@ -135,7 +135,7 @@ public class ScoringMech extends SubsystemBase {
 
         telemetryHandler.addData("front color distance (in)", frontColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("back color distance (in)", backColorSensor.getDistance(DistanceUnit.INCH));
-        telemetryHandler.addData("num pixels in bucket", getNumPixelsInBucket());
+        //telemetryHandler.addData("num pixels in bucket", getNumPixelsInBucket());
         //telemetryHandler.addData("right outtake position", rightMotor.getCurrentPosition());
         //telemetryHandler.addData("left outtake position", leftMotor.getCurrentPosition());
 
@@ -212,10 +212,7 @@ public class ScoringMech extends SubsystemBase {
         intakeMotor.setPower(power);
     }
 
-    public double getFrontColor() {
-        return frontColorSensor.getDistance(DistanceUnit.INCH);
-    }
-
+    /*
     public int getNumPixelsInBucket() {
         boolean frontDetected = frontColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.FRONT_COLOR_THRESHOLD;
         boolean backDetected = backColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.BACK_COLOR_THRESHOLD;
@@ -232,6 +229,15 @@ public class ScoringMech extends SubsystemBase {
                 return 0;
             }
         }
+    }
+     */
+
+    public boolean isFrontColorBlocked() {
+        return frontColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.FRONT_COLOR_THRESHOLD;
+    }
+
+    public boolean isBackColorBlocked() {
+        return backColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.BACK_COLOR_THRESHOLD;
     }
 
     public LiftServoState getLiftServoState() {

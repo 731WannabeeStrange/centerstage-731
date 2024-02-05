@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -37,3 +38,6 @@ public class IntakePixelsCommand extends CommandBase {
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
     }
 }
+
+
+ */
