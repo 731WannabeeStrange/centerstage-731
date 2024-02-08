@@ -1,42 +1,41 @@
+/*
 package org.firstinspires.ftc.teamcode.tests;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.commands.ResetElevatorCommand;
-import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
-import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
+import org.firstinspires.ftc.teamcode.commands.FlushIntakeCommand;
+import org.firstinspires.ftc.teamcode.commands.IntakePixelsCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 @Autonomous(group = "test")
-public class CommandAutoTestOpMode extends LinearOpMode {
+@Config
+public class AutoIntakeTestOpMode extends LinearOpMode {
+    public static double DISTANCE = 10;
+
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
     private final TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
-    private final Pose2d startPose = new Pose2d(0, 0, 0);
 
     @Override
     public void runOpMode() throws InterruptedException {
-        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0), telemetryHandler);
         ScoringMech scoringMech = new ScoringMech(hardwareMap, telemetryHandler);
 
         waitForStart();
 
         scheduler.schedule(
-                driveSubsystem.commandBuilder(startPose)
-                        .lineToXLinearHeading(20, Math.toRadians(90))
-                        .waitSeconds(3)
-                        .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
-                        .waitSeconds(1)
-                        .stopAndAdd(new SequentialCommandGroup(
-                                new ScorePixelsCommand(2800, scoringMech),
-                                new ResetElevatorCommand(scoringMech)
+                drive.pathCommandBuilder(drive.pose)
+                        .afterTime(0, new SequentialCommandGroup(
+                                new IntakePixelsCommand(scoringMech),
+                                new FlushIntakeCommand(scoringMech)
                         ))
-                        .turnTo(0)
+                        .lineToX(-DISTANCE)
                         .build()
         );
 
@@ -48,3 +47,6 @@ public class CommandAutoTestOpMode extends LinearOpMode {
         scheduler.reset();
     }
 }
+
+
+ */

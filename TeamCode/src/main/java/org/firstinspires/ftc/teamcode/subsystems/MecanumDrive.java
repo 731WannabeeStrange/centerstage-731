@@ -33,7 +33,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TrajectoryCommandBuilder;
-import org.firstinspires.ftc.teamcode.utils.caching.CachingDcMotorEx;
 import org.firstinspires.ftc.teamcode.utils.localization.AbsoluteLocalizer;
 import org.firstinspires.ftc.teamcode.utils.localization.Localizer;
 import org.firstinspires.ftc.teamcode.utils.localization.TwoDeadWheelLocalizer;
@@ -71,10 +70,10 @@ public class MecanumDrive extends SubsystemBase {
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
-        leftFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "leftFront"));
-        leftBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "leftBack"));
-        rightBack = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rightBack"));
-        rightFront = new CachingDcMotorEx(hardwareMap.get(DcMotorEx.class, "rightFront"));
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -93,9 +92,8 @@ public class MecanumDrive extends SubsystemBase {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
+        //localizer = new AbsoluteLocalizer(new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick), startPose);
         localizer = new AbsoluteLocalizer(new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick), startPose);
-        // two-wheel for now so we can have heading without tuned odo
-        //localizer = new TwoDeadWheelLocalizer(hardwareMap, imu, PARAMS.inPerTick, startPose);
 
         this.telemetryHandler = telemetryHandler;
     }
@@ -287,7 +285,11 @@ public class MecanumDrive extends SubsystemBase {
 
         @Override
         public void execute() {
-            if (disp + 1 >= trajectory.length()) {
+            disp = trajectory.project(pose.position, disp);
+            Pose2dDual<Time> txWorldTarget = trajectory.get(disp);
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+
+            if (disp + 1 >= trajectory.length() && error.position.norm() < 1) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -297,8 +299,6 @@ public class MecanumDrive extends SubsystemBase {
                 return;
             }
 
-            disp = trajectory.project(pose.position, disp);
-            Pose2dDual<Time> txWorldTarget = trajectory.get(disp);
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
@@ -320,8 +320,6 @@ public class MecanumDrive extends SubsystemBase {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
-            // write error to telemetry
-            Pose2d error = txWorldTarget.value().minusExp(pose);
             telemetryHandler.addData("x error", error.position.x);
             telemetryHandler.addData("y error", error.position.y);
             telemetryHandler.addData("heading error (deg)", Math.toDegrees(error.heading.log()));
@@ -434,36 +432,36 @@ public class MecanumDrive extends SubsystemBase {
         // TODO: fill in these values based on
         //   see https://ftc-docs.firstinspires.org/en/latest/programming_resources/imu/imu.html?highlight=imu#physical-hub-mounting
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
         // drive model parameters
         public double inPerTick = 0.00052843826;
-        public double lateralInPerTick = 1;
-        public double trackWidthTicks = 24536.74597480491;
+        public double lateralInPerTick = 0.00040076792109289977;
+        public double trackWidthTicks = 25318.109773362918;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.358108949318399;
-        public double kV = 0.00010658425400700672;
-        public double kA = 0.00002;
+        public double kS = 1.4336678836467853;
+        public double kV = 0.00010297948239871823;
+        public double kA = 0.000015;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
-        public double minProfileAccel = -30;
-        public double maxProfileAccel = 50;
+        public double maxWheelVel = 45;
+        public double minProfileAccel = -25;
+        public double maxProfileAccel = 45;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 3.5;
-        public double lateralGain = 3.5;
-        public double headingGain = 3.5; // shared with turn
+        public double axialGain = 4.2;
+        public double lateralGain = 4.2;
+        public double headingGain = 4.5; // shared with turn
 
-        public double axialVelGain = 0.3;
-        public double lateralVelGain = 0.3;
-        public double headingVelGain = 0.3; // shared with turn
+        public double axialVelGain = 0;
+        public double lateralVelGain = 0;
+        public double headingVelGain = 0; // shared with turn
     }
 }

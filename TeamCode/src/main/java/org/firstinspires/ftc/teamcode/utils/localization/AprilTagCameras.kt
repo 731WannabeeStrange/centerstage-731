@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.utils.localization
 
 import android.util.Size
+import com.acmerobotics.roadrunner.Pose2d
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName
 import org.firstinspires.ftc.vision.VisionPortal
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor
-import wannabee.lie.LiePose2d
 import kotlin.math.PI
 
 enum class AprilTagCameraMode {
@@ -18,7 +18,7 @@ class AprilTagCameras(
     hardwareMap: HardwareMap,
     cameraMode: AprilTagCameraMode
 ) {
-    private val robotToCameraTransforms: List<LiePose2d>
+    private val robotToCameraTransforms: List<Pose2d>
     private val visionPortals: List<VisionPortal>
     private val aprilTagProcessors: List<AprilTagProcessor>
 
@@ -26,7 +26,7 @@ class AprilTagCameras(
         when (cameraMode) {
             AprilTagCameraMode.SINGLE -> {
                 robotToCameraTransforms = listOf(
-                    LiePose2d(6.0, 6.0, 0.0)
+                    Pose2d(6.0, 6.0, 0.0)
                 )
                 aprilTagProcessors = listOf(
                     AprilTagProcessor.Builder()
@@ -46,8 +46,8 @@ class AprilTagCameras(
 
             AprilTagCameraMode.DOUBLE -> {
                 robotToCameraTransforms = listOf(
-                    LiePose2d(6.0, 6.0, 0.0),
-                    LiePose2d(-6.0, -6.0, -PI)
+                    Pose2d(6.0, 6.0, 0.0),
+                    Pose2d(-6.0, -6.0, -PI)
                 )
                 aprilTagProcessors = listOf(
                     AprilTagProcessor.Builder()
@@ -91,6 +91,6 @@ class AprilTagCameras(
 }
 
 data class AprilTagCameraResults(
-    val robotToCameraTransform: LiePose2d,
+    val robotToCameraTransform: Pose2d,
     val aprilTagDetections: ArrayList<AprilTagDetection>
 )

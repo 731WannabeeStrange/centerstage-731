@@ -4,156 +4,218 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
+import org.firstinspires.ftc.teamcode.utils.RangeController;
+import org.firstinspires.ftc.teamcode.utils.Rumbler;
+import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.function.BooleanSupplier;
 
 @Config
 public class ManualScoringCommand extends CommandBase {
-    private final Intake intakeSubsystem;
-    private final Elevator elevatorSubsystem;
-    private final BooleanSupplier g1b, g1x, g1y, g1rb;
-    private final Runnable rumbler;
+    public static double FIRST_RELEASE_TIME = 0.4;
+    public static double SECOND_RELEASE_TIME = 1;
+    public static double WAIT_COLOR_SENSOR_TIME = 0.6;
+    public static double LIFT_UP_POS = 2000;
+    public static double LIFT_DOWN_POS = 150;
+    public static double SCORING_INCREMENT = 300;
+    public static double MIN_SCORING_POS = 1000;
+
+    private final ScoringMech scoringMechSubsystem;
+    private final BooleanSupplier intakeButton, reverseIntakeButton, scoreButton, hangButton, upButton, downButton, cancelButton;
+    private final Rumbler rumbler;
     private final ElapsedTime eTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+    private final TelemetryHandler telemetryHandler;
 
-    public static double RELEASE_FIRST_TIME = 0.6;
-    public static double RELEASE_SECOND_TIME = 0.75;
-
-    private enum ScoringState {
-        LIFTING,
-        LIFTED,
-        DROPPING,
-        INTAKING,
-        BUCKET_FULL_WARNING,
-        WAITING_FOR_SCORE,
-        ELEVATING,
-        SCORING_FIRST,
-        RELEASING_FIRST,
-        SCORING_SECOND,
-        RELEASING_SECOND,
-        RESETTING,
-        IDLE
-    }
+    private int numPixelsInBucket = 0;
+    private double lastScoringPosition = 2400;
+    private boolean oldUpButton = false, oldDownButton = false, oldScoreButton = false, oldHangButton = false;
     private ScoringState scoringState = ScoringState.INTAKING;
 
-    public ManualScoringCommand(Intake intakeSubsystem, Elevator elevatorSubsystem, BooleanSupplier g1b, BooleanSupplier g1x, BooleanSupplier g1y, BooleanSupplier g1rb, Runnable rumbler) {
-        this.intakeSubsystem = intakeSubsystem;
-        this.elevatorSubsystem = elevatorSubsystem;
-        this.g1b = g1b;
-        this.g1x = g1x;
-        this.g1y = g1y;
-        this.g1rb = g1rb;
+    public ManualScoringCommand(ScoringMech scoringMechSubsystem, BooleanSupplier intakeButton,
+                                BooleanSupplier reverseIntakeButton, BooleanSupplier scoreButton,
+                                BooleanSupplier hangButton, BooleanSupplier upButton,
+                                BooleanSupplier downButton, BooleanSupplier cancelButton,
+                                Rumbler rumbler, TelemetryHandler telemetryHandler) {
+        this.scoringMechSubsystem = scoringMechSubsystem;
+        this.intakeButton = intakeButton;
+        this.reverseIntakeButton = reverseIntakeButton;
+        this.scoreButton = scoreButton;
+        this.hangButton = hangButton;
+        this.upButton = upButton;
+        this.downButton = downButton;
+        this.cancelButton = cancelButton;
         this.rumbler = rumbler;
+        this.telemetryHandler = telemetryHandler;
 
-        addRequirements(intakeSubsystem, elevatorSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void execute() {
         switch (scoringState) {
             case IDLE:
-                if (g1b.getAsBoolean()) {
-                    if (elevatorSubsystem.isBucketFull()) {
-                        rumbler.run();
-                        scoringState = ScoringState.BUCKET_FULL_WARNING;
+                if (intakeButton.getAsBoolean()) {
+                    if (reverseIntakeButton.getAsBoolean()) {
+                        scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+                        scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
+                        scoringState = ScoringState.REVERSE_INTAKE;
+                    } else if (numPixelsInBucket == 2) {
+                        rumbler.rumble(500);
                     } else {
-                        intakeSubsystem.start();
-                        elevatorSubsystem.setWheelState(Elevator.WheelState.INTAKE);
+                        scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.DOWN_POS);
+                        scoringMechSubsystem.setIntakePower(ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
+                        scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
                         scoringState = ScoringState.INTAKING;
                     }
                 }
-                if (g1rb.getAsBoolean() && g1y.getAsBoolean()) {
-                    elevatorSubsystem.sendLiftUp();
-                    scoringState = ScoringState.LIFTING;
+                if (scoreButton.getAsBoolean() && numPixelsInBucket > 0) {
+                    scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
+                    scoringState = ScoringState.SCORING;
                 }
-                break;
-            case LIFTING:
-                if (elevatorSubsystem.isLiftUp()) {
-                    scoringState = ScoringState.LIFTED;
-                }
-                break;
-            case LIFTED:
-                if (g1rb.getAsBoolean()) {
-                    elevatorSubsystem.sendLiftDown();
-                    scoringState = ScoringState.DROPPING;
-                }
-                break;
-            case DROPPING:
-                if (elevatorSubsystem.isInIntakePosition()) {
-                    scoringState = ScoringState.IDLE;
+                if (hangButton.getAsBoolean()) {
+                    scoringMechSubsystem.setElevatorHeight(LIFT_UP_POS);
+                    scoringState = ScoringState.WAITING_FOR_HANG;
                 }
                 break;
             case INTAKING:
-                if (!g1b.getAsBoolean()) {
-                    intakeSubsystem.stop();
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
+                if (!intakeButton.getAsBoolean() || numPixelsInBucket == 2) {
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.UP_POS);
+                    scoringMechSubsystem.setIntakePower(0);
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
                     scoringState = ScoringState.IDLE;
+                } else if (reverseIntakeButton.getAsBoolean()) {
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+                    scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    scoringState = ScoringState.REVERSE_INTAKE;
                 }
-                if (elevatorSubsystem.isBucketFull()) {
-                    intakeSubsystem.stop();
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
-                    if (!g1b.getAsBoolean()) {
-                        scoringState = ScoringState.WAITING_FOR_SCORE;
+                break;
+            case REVERSE_INTAKE:
+                if (!intakeButton.getAsBoolean()) {
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.UP_POS);
+                    scoringMechSubsystem.setIntakePower(0);
+                    scoringState = ScoringState.IDLE;
+                } else if (!reverseIntakeButton.getAsBoolean()) {
+                    scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.DOWN_POS);
+                    scoringMechSubsystem.setIntakePower(ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.INTAKE);
+                    scoringState = ScoringState.INTAKING;
+                }
+                break;
+            case SCORING:
+                if (scoringMechSubsystem.canLiftServosExtend()) {
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.OUTTAKE);
+                }
+
+                if (scoreButton.getAsBoolean() && !oldScoreButton && !scoringMechSubsystem.isElevatorBusy()) {
+                    oldUpButton = false;
+                    oldDownButton = false;
+
+                    if (numPixelsInBucket == 2) {
+                        scoringState = ScoringState.FIRST_RELEASE;
+                    } else {
+                        scoringState = ScoringState.SECOND_RELEASE;
+                    }
+
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.OUTTAKE);
+                    eTime.reset();
+                }
+
+                if (upButton.getAsBoolean() && !oldUpButton) {
+                    lastScoringPosition += SCORING_INCREMENT;
+                }
+                if (downButton.getAsBoolean() && !oldDownButton) {
+                    lastScoringPosition -= SCORING_INCREMENT;
+                }
+                lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_POS, ScoringMech.ELEVATOR_PARAMS.MAX_POS);
+                scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
+
+                if (cancelButton.getAsBoolean()) {
+                    scoringMechSubsystem.reset();
+                    scoringState = ScoringState.RESETTING;
+                }
+
+                telemetryHandler.addData("last scoring pos", lastScoringPosition);
+
+                break;
+            case FIRST_RELEASE:
+                if (eTime.time() > FIRST_RELEASE_TIME) {
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    scoringState = ScoringState.WAIT_FOR_COLOR_SENSOR;
+                    numPixelsInBucket = 1;
+                    eTime.reset();
+                }
+                break;
+            case SECOND_RELEASE:
+                if (eTime.time() > SECOND_RELEASE_TIME) {
+                    scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
+                    scoringMechSubsystem.reset();
+                    numPixelsInBucket = 0;
+                    scoringState = ScoringState.RESETTING;
+                }
+                break;
+            case WAIT_FOR_COLOR_SENSOR:
+                if (eTime.time() > WAIT_COLOR_SENSOR_TIME) {
+                    if (numPixelsInBucket > 0) {
+                        scoringState = ScoringState.SCORING;
+                    } else {
+                        scoringMechSubsystem.reset();
+                        scoringState = ScoringState.RESETTING;
                     }
                 }
                 break;
-            case BUCKET_FULL_WARNING:
-                if (!g1b.getAsBoolean()) {
-                    scoringState = ScoringState.WAITING_FOR_SCORE;
+            case WAITING_FOR_HANG:
+                if (scoringMechSubsystem.canLiftServosExtend()) {
+                    scoringMechSubsystem.setLiftServoState(ScoringMech.LiftServoState.LIFT);
                 }
-                break;
-            case WAITING_FOR_SCORE:
-                if (g1b.getAsBoolean()) {
-                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.MAXIMUM);
-                    scoringState = ScoringState.ELEVATING;
+                if (hangButton.getAsBoolean() && !oldHangButton && !scoringMechSubsystem.isElevatorBusy()) {
+                    scoringMechSubsystem.setElevatorHeight(LIFT_DOWN_POS);
+                    scoringState = ScoringState.HANGING;
                 }
-                break;
-            case ELEVATING:
-                if (elevatorSubsystem.isInScoringPosition()) {
-                    scoringState = ScoringState.SCORING_FIRST;
-                }
-                if (g1x.getAsBoolean()) {
-                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
+                if (cancelButton.getAsBoolean()) {
+                    scoringMechSubsystem.reset();
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
-            case SCORING_FIRST:
-                if (g1b.getAsBoolean()) {
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.OUTTAKE);
-                    scoringState = ScoringState.RELEASING_FIRST;
-                    eTime.reset();
-                }
-                if (g1x.getAsBoolean()) {
-                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
-                    scoringState = ScoringState.RESETTING;
-                }
-                break;
-            case RELEASING_FIRST:
-                if (eTime.time() > RELEASE_FIRST_TIME) {
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
-                    scoringState = ScoringState.SCORING_SECOND;
-                }
-                break;
-            case SCORING_SECOND:
-                if (g1b.getAsBoolean()) {
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.OUTTAKE);
-                    scoringState = ScoringState.RELEASING_SECOND;
-                    eTime.reset();
-                }
-                break;
-            case RELEASING_SECOND:
-                if (eTime.time() > RELEASE_SECOND_TIME) {
-                    elevatorSubsystem.setWheelState(Elevator.WheelState.STOPPED);
-                    elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
+            case HANGING:
+                if (cancelButton.getAsBoolean()) {
+                    scoringMechSubsystem.reset();
                     scoringState = ScoringState.RESETTING;
                 }
                 break;
             case RESETTING:
-                if (elevatorSubsystem.isInIntakePosition()) {
+                if (!scoringMechSubsystem.isElevatorBusy() && scoringMechSubsystem.getLiftServoState() == ScoringMech.LiftServoState.INTAKE) {
                     scoringState = ScoringState.IDLE;
                 }
                 break;
         }
+
+        if (numPixelsInBucket == 0 && scoringMechSubsystem.isFrontColorBlocked() && scoringState != ScoringState.RESETTING) {
+            numPixelsInBucket = 1;
+        } else if (scoringMechSubsystem.isFrontColorBlocked() && scoringMechSubsystem.isBackColorBlocked()) {
+            numPixelsInBucket = 2;
+        }
+
+        oldUpButton = upButton.getAsBoolean();
+        oldDownButton = downButton.getAsBoolean();
+        oldHangButton = hangButton.getAsBoolean();
+        oldScoreButton = scoreButton.getAsBoolean();
+
+        telemetryHandler.addData("scoring state", scoringState);
+        telemetryHandler.addData("num pixels in bucket", numPixelsInBucket);
+    }
+
+    private enum ScoringState {
+        IDLE,
+        INTAKING,
+        REVERSE_INTAKE,
+        SCORING,
+        FIRST_RELEASE,
+        SECOND_RELEASE,
+        WAIT_FOR_COLOR_SENSOR,
+        WAITING_FOR_HANG,
+        HANGING,
+        RESETTING
     }
 }

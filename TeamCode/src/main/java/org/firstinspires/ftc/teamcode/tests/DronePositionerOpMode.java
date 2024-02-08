@@ -3,20 +3,21 @@ package org.firstinspires.ftc.teamcode.tests;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp
 @Config
-public class ServoPortFinderOpMode extends LinearOpMode {
+public class DronePositionerOpMode extends LinearOpMode {
     public static double POSITION = 0.5;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        CRServo mysteryServo = hardwareMap.get(CRServo.class, "wheel");
+        Servo drone = hardwareMap.get(Servo.class, "drone");
 
         waitForStart();
 
-        while (opModeIsActive() && !isStopRequested()) {
-            mysteryServo.setPower(POSITION);
+        while (opModeIsActive()) {
+            drone.setPosition(POSITION);
         }
     }
 }

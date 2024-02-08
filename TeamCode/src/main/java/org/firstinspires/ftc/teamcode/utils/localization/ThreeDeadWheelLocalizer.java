@@ -1,25 +1,26 @@
 package org.firstinspires.ftc.teamcode.utils.localization;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2dDual;
 import com.acmerobotics.roadrunner.ftc.Encoder;
-import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
 public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
     public static class Params {
-        public double par0YTicks = 8144.3190903693585; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = -7352.5865316061445; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = 7576.15139617889; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = 7526.320931993838; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = -8145.292312544867; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = 7811.3792025160965; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -34,22 +35,21 @@ public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightFront")));
+        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "leftFront")));
         par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightOdo")));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightBack")));
 
-        par0.setDirection(DcMotor.Direction.REVERSE);
-        perp.setDirection(DcMotor.Direction.REVERSE);
+        par0.setDirection(DcMotorSimple.Direction.REVERSE);
+        perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         lastPar0Pos = par0.getPositionAndVelocity().position;
         lastPar1Pos = par1.getPositionAndVelocity().position;
         lastPerpPos = perp.getPositionAndVelocity().position;
 
         this.inPerTick = inPerTick;
-
-        FlightRecorder.write("THREE_DEAD_WHEEL_PARAMS", PARAMS);
     }
 
+    @NonNull
     public Twist2dDual<Time> update() {
         PositionVelocityPair par0PosVel = par0.getPositionAndVelocity();
         PositionVelocityPair par1PosVel = par1.getPositionAndVelocity();
@@ -60,20 +60,20 @@ public final class ThreeDeadWheelLocalizer implements IncrementalLocalizer {
         int perpPosDelta = perpPosVel.position - lastPerpPos;
 
         Twist2dDual<Time> twist = new Twist2dDual<>(
-                new Vector2dDual<>(
-                        new DualNum<Time>(new double[]{
-                                (PARAMS.par0YTicks * par1PosDelta - PARAMS.par1YTicks * par0PosDelta) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
-                                (PARAMS.par0YTicks * par1PosVel.velocity - PARAMS.par1YTicks * par0PosVel.velocity) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
-                        }).times(inPerTick),
-                        new DualNum<Time>(new double[]{
-                                (PARAMS.perpXTicks / (PARAMS.par0YTicks - PARAMS.par1YTicks) * (par1PosDelta - par0PosDelta) + perpPosDelta),
-                                (PARAMS.perpXTicks / (PARAMS.par0YTicks - PARAMS.par1YTicks) * (par1PosVel.velocity - par0PosVel.velocity) + perpPosVel.velocity),
-                        }).times(inPerTick)
-                ),
-                new DualNum<>(new double[]{
-                        (par0PosDelta - par1PosDelta) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
-                        (par0PosVel.velocity - par1PosVel.velocity) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
-                })
+            new Vector2dDual<>(
+                    new DualNum<Time>(new double[] {
+                        (PARAMS.par0YTicks * par1PosDelta - PARAMS.par1YTicks * par0PosDelta) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
+                        (PARAMS.par0YTicks * par1PosVel.velocity - PARAMS.par1YTicks * par0PosVel.velocity) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
+                    }).times(inPerTick),
+            new DualNum<Time>(new double[] {
+                (PARAMS.perpXTicks / (PARAMS.par0YTicks - PARAMS.par1YTicks) * (par1PosDelta - par0PosDelta) + perpPosDelta),
+                (PARAMS.perpXTicks / (PARAMS.par0YTicks - PARAMS.par1YTicks) * (par1PosVel.velocity - par0PosVel.velocity) + perpPosVel.velocity),
+            }).times(inPerTick)
+        ),
+        new DualNum<>(new double[] {
+            (par0PosDelta - par1PosDelta) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
+            (par0PosVel.velocity - par1PosVel.velocity) / (PARAMS.par0YTicks - PARAMS.par1YTicks),
+        })
         );
 
         lastPar0Pos = par0PosVel.position;

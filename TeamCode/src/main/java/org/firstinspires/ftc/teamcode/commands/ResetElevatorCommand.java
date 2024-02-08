@@ -2,23 +2,23 @@ package org.firstinspires.ftc.teamcode.commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
 public class ResetElevatorCommand extends CommandBase {
-    private Elevator elevatorSubsystem;
-    public ResetElevatorCommand(Elevator elevatorSubsystem) {
-        this.elevatorSubsystem = elevatorSubsystem;
+    private final ScoringMech scoringMechSubsystem;
+    public ResetElevatorCommand(ScoringMech scoringMechSubsystem) {
+        this.scoringMechSubsystem = scoringMechSubsystem;
 
-        addRequirements(elevatorSubsystem);
+        //addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
-        elevatorSubsystem.setElevatorHeight(Elevator.ElevatorState.IDLE);
+        scoringMechSubsystem.reset();
     }
 
     @Override
     public boolean isFinished() {
-        return elevatorSubsystem.isInIntakePosition();
+        return !scoringMechSubsystem.isElevatorBusy() && scoringMechSubsystem.getLiftServoState() == ScoringMech.LiftServoState.INTAKE;
     }
 }

@@ -11,10 +11,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commands.ManualDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.ManualScoringCommand;
-import org.firstinspires.ftc.teamcode.subsystems.Elevator;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.PoseStorage;
+import org.firstinspires.ftc.teamcode.utils.Rumbler;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 import java.util.List;
@@ -33,17 +34,21 @@ public class BlueTeleOp extends LinearOpMode {
 
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
 
-        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, startPose, telemetryHandler);
-        Intake intakeSubsystem = new Intake(hardwareMap, telemetryHandler);
-        Elevator elevatorSubsystem = new Elevator(hardwareMap, telemetryHandler);
+        MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, PoseStorage.currentPose != null ? PoseStorage.currentPose : startPose, telemetryHandler);
+        ScoringMech scoringMechSubsystem = new ScoringMech(hardwareMap, telemetryHandler);
+        DroneLauncher droneLauncher = new DroneLauncher(hardwareMap);
         GamepadEx gamepad = new GamepadEx(gamepad1);
+        Rumbler rumbler = new Rumbler(gamepad1);
 
-        CommandScheduler.getInstance().schedule(new ManualScoringCommand(intakeSubsystem, elevatorSubsystem,
-                () -> gamepad.getButton(GamepadKeys.Button.B),
-                () -> gamepad.getButton(GamepadKeys.Button.X),
+        scoringMechSubsystem.setDefaultCommand(new ManualScoringCommand(scoringMechSubsystem,
+                () -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5,
+                () -> gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5,
                 () -> gamepad.getButton(GamepadKeys.Button.Y),
                 () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER),
-                () -> gamepad1.rumble(500)));
+                () -> gamepad.getButton(GamepadKeys.Button.B),
+                () -> gamepad.getButton(GamepadKeys.Button.A),
+                () -> gamepad.getButton(GamepadKeys.Button.X),
+                rumbler, telemetryHandler));
         driveSubsystem.setDefaultCommand(new ManualDriveCommand(driveSubsystem, gamepad::getLeftX,
                 gamepad::getLeftY, gamepad::getRightX,
                 () -> gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER),
@@ -53,6 +58,8 @@ public class BlueTeleOp extends LinearOpMode {
                 () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT),
                 ManualDriveCommand.FieldOrientation.BLUE,
                 telemetryHandler));
+        gamepad.getGamepadButton(GamepadKeys.Button.BACK).and(gamepad.getGamepadButton(GamepadKeys.Button.START))
+                .whenActive(droneLauncher::launchDrone);
 
         waitForStart();
 
@@ -69,6 +76,7 @@ public class BlueTeleOp extends LinearOpMode {
             telemetryHandler.update();
         }
 
+        PoseStorage.currentPose = null;
         CommandScheduler.getInstance().reset();
     }
 }

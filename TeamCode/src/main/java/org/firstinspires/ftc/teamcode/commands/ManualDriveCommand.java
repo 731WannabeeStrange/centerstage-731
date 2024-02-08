@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.command.CommandBase;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
@@ -14,9 +15,9 @@ import java.util.function.DoubleSupplier;
 
 @Config
 public class ManualDriveCommand extends CommandBase {
-
     public static double P = 0.02;
     public static double SLOW_MODE_FACTOR = 4;
+
     private final MecanumDrive drive;
     private final DoubleSupplier strafe, forward, rotation;
     private final BooleanSupplier slowMode, autoTurnUp, autoTurnLeft, autoTurnDown, autoTurnRight;
@@ -28,7 +29,6 @@ public class ManualDriveCommand extends CommandBase {
         BLUE,
         RED
     }
-
     private final FieldOrientation fieldOrientation;
 
     public ManualDriveCommand(MecanumDrive drive, DoubleSupplier strafe, DoubleSupplier forward,
@@ -84,12 +84,7 @@ public class ManualDriveCommand extends CommandBase {
                 powers = new PoseVelocity2d(input, -rotation.getAsDouble());
                 break;
             case AUTO:
-                double error = desiredAngle - Math.toDegrees(currentHeading.toDouble());
-                if (error > 180) {
-                    error -= 360;
-                } else if (error < -180) {
-                    error += 360;
-                }
+                double error = AngleUnit.normalizeDegrees(desiredAngle - Math.toDegrees(currentHeading.toDouble()));
                 telemetryHandler.addData("desired angle", desiredAngle);
                 telemetryHandler.addData("turn error", error);
                 powers = new PoseVelocity2d(input, P * error);

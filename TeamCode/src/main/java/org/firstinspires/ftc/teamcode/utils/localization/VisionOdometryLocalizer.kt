@@ -1,4 +1,3 @@
-/*
 package org.firstinspires.ftc.teamcode.utils.localization
 
 import com.acmerobotics.roadrunner.Pose2d
@@ -8,26 +7,19 @@ import com.acmerobotics.roadrunner.Vector2d
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.ejml.data.DMatrix2x2
 import org.ejml.data.DMatrix3x3
+import org.ejml.data.DMatrixRMaj
+import org.ejml.dense.row.CommonOps_DDRM
 import org.ejml.equation.Equation
 import org.ejml.equation.Sequence
-import wannabee.lie.LiePose2d
-import wannabee.lie.LieTwist2d
-
-private fun Twist2d.toLieTwist2d() = LieTwist2d(this.line.x, this.line.y, this.angle)
-private fun Pose2d.toLiePose2d() = LiePose2d(this.position.x, this.position.y, this.heading.log())
-private fun LiePose2d.toPose2d() = Pose2d(this.position.a1, this.position.a2, this.rotation.log())
+import org.firstinspires.ftc.teamcode.utils.inverseJacobians
+import org.firstinspires.ftc.teamcode.utils.plusJacobians
+import org.firstinspires.ftc.teamcode.utils.timesJacobians
 
 class VisionOdometryLocalizer(
     hardwareMap: HardwareMap,
-    private val inPerTick: Double,
-    poseEstimate: Pose2d
-): Localizer {
-    private var liePoseEstimate = poseEstimate.toLiePose2d()
+    inPerTick: Double,
     override var poseEstimate: Pose2d
-        get() = liePoseEstimate.toPose2d()
-        set(value) {
-            liePoseEstimate = value.toLiePose2d()
-        }
+): Localizer {
     override var poseVelocity = PoseVelocity2d(Vector2d(0.0, 0.0), 0.0)
         private set
 
@@ -47,11 +39,17 @@ class VisionOdometryLocalizer(
     private var P = DMatrix3x3()
     private var J_x = DMatrix3x3()
     private var J_u = DMatrix3x3()
-    private val updateCovarianceOdometry: Sequence
+    private var J_xi_x = DMatrix3x3()
+    private var J_e_xi = DMatrixRMaj(2, 3)
+    private var H = DMatrixRMaj(2, 3)
+    private var Z = DMatrix2x2()
+    private var K = DMatrixRMaj(3, 2)
 
-    private var H = DMatrix3x3()
-    private var Z = DMatrix3x3()
-    private var K = DMatrix3x3()
+    private val updateCovarianceOdometry: Sequence
+    private val updateH: Sequence
+    private val updateCameraCovariance: Sequence
+    private val updateKalmanGain: Sequence
+    private val updateCovarianceMeasurement: Sequence
 
     init {
         val eq = Equation()
@@ -59,28 +57,66 @@ class VisionOdometryLocalizer(
             P, "P",
             J_x, "F",
             J_u, "G",
+            J_xi_x, "I",
+            J_e_xi, "J",
             odometryNoise, "W",
             H, "H",
-            aprilTagNoise, "R"
-                    Z, "Z",
+            aprilTagNoise, "R",
+            Z, "Z",
             K, "K"
         )
 
         updateCovarianceOdometry = eq.compile("P = F*P*F' + G*W*G'")
+        updateH = eq.compile("H = J*I")
+        updateCameraCovariance = eq.compile("Z = H*P*H' + R")
+        updateKalmanGain = eq.compile("K = P*H'*inv(Z)")
+        updateCovarianceMeasurement = eq.compile("P = P - K*Z*K'")
     }
 
     override fun update() {
+        // get odometry signal
         val twist = odometryLocalizer.update()
         poseVelocity = twist.velocity().value()
 
-        val lieTwist = twist.value().toLieTwist2d()
-        val plusResult = liePoseEstimate.plusJacobians(lieTwist)
-        liePoseEstimate = plusResult.pose
-        J_x = plusResult.jSelf
-        J_u = plusResult.jTau
+        // move
+        poseEstimate = poseEstimate.plusJacobians(twist.value(), J_x, J_u)
+        updateCovarianceOdometry.perform() // these steps alone should do odo localization right
 
+        // correct using each landmark
+        for (result in aprilTagCameras.getCameraResults()) {
+            for (detection in result.aprilTagDetections) {
+                // landmark
+                val b = Vector2d(
+                    detection.metadata.fieldPosition.get(0).toDouble(),
+                    detection.metadata.fieldPosition.get(1).toDouble()
+                )
 
+                // measurement
+                val y = Vector2d(
+                    detection.ftcPose.x,
+                    detection.ftcPose.y
+                )
+
+                // expectation
+                val e = (poseEstimate * result.robotToCameraTransform).inverseJacobians(J_xi_x)
+                    .timesJacobians(b, J_e_xi)
+                updateH.perform()
+
+                // innovation
+                val z = y - e
+                updateCameraCovariance.perform()
+
+                // Kalman gain
+                updateKalmanGain.perform()
+
+                // correction
+                val dx = DMatrixRMaj()
+                CommonOps_DDRM.mult(K, DMatrixRMaj(doubleArrayOf(z.x, z.y)), dx)
+
+                // update
+                poseEstimate += Twist2d(Vector2d(dx.get(0), dx.get(1)), dx.get(2))
+                updateCovarianceMeasurement.perform()
+            }
+        }
     }
 }
-
- */
