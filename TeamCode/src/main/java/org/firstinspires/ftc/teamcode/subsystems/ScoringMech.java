@@ -135,9 +135,9 @@ public class ScoringMech extends SubsystemBase {
 
         telemetryHandler.addData("front color distance (in)", frontColorSensor.getDistance(DistanceUnit.INCH));
         telemetryHandler.addData("back color distance (in)", backColorSensor.getDistance(DistanceUnit.INCH));
-        //telemetryHandler.addData("num pixels in bucket", getNumPixelsInBucket());
-        //telemetryHandler.addData("right outtake position", rightMotor.getCurrentPosition());
-        //telemetryHandler.addData("left outtake position", leftMotor.getCurrentPosition());
+
+        telemetryHandler.addData("right outtake position", rightMotor.getCurrentPosition());
+        telemetryHandler.addData("left outtake position", leftMotor.getCurrentPosition());
 
         //telemetryHandler.addData("right intake servo position", rightServo.getPosition());
         //telemetryHandler.addData("left intake servo position", leftServo.getPosition());
@@ -181,29 +181,6 @@ public class ScoringMech extends SubsystemBase {
         }
     }
 
-    /*
-    public void setIntakeState(IntakeState intakeState) {
-        switch (intakeState) {
-            case STARTED:
-                intakeMotor.setPower(INTAKE_PARAMS.MOTOR_POWER);
-                intakeServoPair.setPosition(INTAKE_PARAMS.DOWN_POS);
-                break;
-            case REVERSED:
-                intakeMotor.setPower(-INTAKE_PARAMS.MOTOR_POWER);
-                intakeServoPair.setPosition(INTAKE_PARAMS.REVERSE_POS);
-                break;
-            case SLOW_REVERSED:
-                intakeMotor.setPower(-INTAKE_PARAMS.OUTTAKE_POWER);
-                intakeServoPair.setPosition(INTAKE_PARAMS.REVERSE_POS);
-                break;
-            case STOPPED:
-                intakeMotor.setPower(0);
-                intakeServoPair.setPosition(INTAKE_PARAMS.UP_POS);
-                break;
-        }
-    }
-     */
-
     public void setIntakePosition(double position) {
         intakeServoPair.setPosition(position);
     }
@@ -211,26 +188,6 @@ public class ScoringMech extends SubsystemBase {
     public void setIntakePower(double power) {
         intakeMotor.setPower(power);
     }
-
-    /*
-    public int getNumPixelsInBucket() {
-        boolean frontDetected = frontColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.FRONT_COLOR_THRESHOLD;
-        boolean backDetected = backColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.BACK_COLOR_THRESHOLD;
-        if (backDetected) {
-            if (frontDetected) {
-                return 2;
-            } else {
-                return 1;
-            }
-        } else {
-            if (frontDetected) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    }
-     */
 
     public boolean isFrontColorBlocked() {
         return frontColorSensor.getDistance(DistanceUnit.INCH) < BUCKET_PARAMS.FRONT_COLOR_THRESHOLD;
