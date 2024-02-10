@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.Pose2dDual
 import com.acmerobotics.roadrunner.PoseMap
 import com.acmerobotics.roadrunner.Rotation2d
 import com.acmerobotics.roadrunner.Rotation2dDual
+import com.acmerobotics.roadrunner.TimeTrajectory
 import com.acmerobotics.roadrunner.TimeTurn
 import com.acmerobotics.roadrunner.TrajectoryBuilder
 import com.acmerobotics.roadrunner.TurnConstraints
@@ -18,7 +19,46 @@ import com.acmerobotics.roadrunner.Vector2dDual
 import com.acmerobotics.roadrunner.VelConstraint
 import com.acmerobotics.roadrunner.map
 import com.arcrobotics.ftclib.command.Command
+import com.arcrobotics.ftclib.command.ParallelCommandGroup
+import com.arcrobotics.ftclib.command.ParallelDeadlineGroup
+import com.arcrobotics.ftclib.command.ParallelRaceGroup
 import com.arcrobotics.ftclib.command.SequentialCommandGroup
+import com.arcrobotics.ftclib.command.WaitCommand
+
+private sealed class MarkerFactory(val segmentIndex: Int, val interruptor: Boolean) {
+    abstract fun make(t: TimeTrajectory, segmentDisp: Double): Command
+}
+
+private class TimeMarkerFactory(
+    segmentIndex: Int,
+    interruptor: Boolean,
+    val dt: Double,
+    val c: Command
+) :
+    MarkerFactory(segmentIndex, interruptor) {
+    override fun make(t: TimeTrajectory, segmentDisp: Double) =
+        SequentialCommandGroup(
+            WaitCommand(((t.profile.inverse(segmentDisp) + dt) * 1000).toLong()),
+            c
+        )
+}
+
+private class DispMarkerFactory(
+    segmentIndex: Int,
+    interruptor: Boolean,
+    val ds: Double,
+    val c: Command
+) :
+    MarkerFactory(segmentIndex, interruptor) {
+    override fun make(t: TimeTrajectory, segmentDisp: Double) =
+        SequentialCommandGroup(
+            WaitCommand(((t.profile.inverse(segmentDisp + ds)) * 1000).toLong()),
+            c
+        )
+}
+
+private class TimeDelayCommand(val dt: Double) :
+    ParallelCommandGroup(WaitCommand((dt * 1000).toLong()))
 
 fun interface TurnCommandFactory {
     fun make(t: TimeTurn): Command
@@ -51,6 +91,7 @@ class TrajectoryCommandBuilder private constructor(
     private val lastPoseUnmapped: Pose2d,
     private val lastPose: Pose2d,
     private val lastTangent: Rotation2d,
+    private val ms: List<MarkerFactory>,
     private val commandList: List<Command>
 ) {
     @JvmOverloads
@@ -87,6 +128,7 @@ class TrajectoryCommandBuilder private constructor(
                 beginPose,
                 poseMap.map(beginPose),
                 poseMap.map(beginPose).heading,
+                emptyList(),
                 emptyList()
             )
 
@@ -97,6 +139,7 @@ class TrajectoryCommandBuilder private constructor(
         lastPoseUnmapped: Pose2d,
         lastPose: Pose2d,
         lastTangent: Rotation2d,
+        ms: List<MarkerFactory>,
         commandList: List<Command>
     ) :
             this(
@@ -115,6 +158,7 @@ class TrajectoryCommandBuilder private constructor(
                 lastPoseUnmapped,
                 lastPose,
                 lastTangent,
+                ms,
                 commandList
             )
 
@@ -123,6 +167,8 @@ class TrajectoryCommandBuilder private constructor(
      */
     fun endTrajectory() =
         if (n == 0) {
+            require(ms.isEmpty())
+
             this
         } else {
             val ts = tb.build()
@@ -130,6 +176,50 @@ class TrajectoryCommandBuilder private constructor(
             val end = ts.last().path.end(2)
             val endPose = end.value()
             val endTangent = end.velocity().value().linearVel.angleCast()
+            val (newCommands, msRem) = ts.zip(ts.scan(0) { acc, t -> acc + t.offsets.size })
+                .foldRight(
+                    Pair(emptyList<Command>(), ms)
+                ) { (traj, offset), (acc, ms) ->
+                    val timeTraj = TimeTrajectory(traj)
+                    val dispTraj = DisplacementTrajectory(traj)
+                    val commands: MutableList<Command> = mutableListOf(
+                        trajectoryCommandFactory.make(dispTraj)
+                    )
+
+                    val interruptors = mutableListOf<Command>()
+                    val msRem = mutableListOf<MarkerFactory>()
+                    for (m in ms) {
+                        val i = m.segmentIndex - offset
+                        if (i >= 0) {
+                            if (m.interruptor) {
+                                interruptors.add(m.make(timeTraj, traj.offsets[i]))
+                            } else {
+                                commands.add(m.make(timeTraj, traj.offsets[i]))
+                            }
+                        } else {
+                            msRem.add(m)
+                        }
+                    }
+
+                    if (interruptors.size > 0) {
+                        Pair(
+                            listOf(
+                                ParallelDeadlineGroup(
+                                    if (interruptors.size > 1) ParallelRaceGroup(*interruptors.toTypedArray()) else interruptors.first(),
+                                    *commands.toTypedArray()
+                                )
+                            ) + acc, msRem
+                        )
+                    } else {
+                        Pair(
+                            listOf(
+                                if (commands.size == 1) commands.first() else ParallelCommandGroup(*commands.toTypedArray())
+                            ) + acc, msRem
+                        )
+                    }
+                }
+
+            require(msRem.isEmpty())
 
             TrajectoryCommandBuilder(
                 this,
@@ -146,9 +236,8 @@ class TrajectoryCommandBuilder private constructor(
                 endPoseUnmapped,
                 endPose,
                 endTangent,
-                commandList + ts.map { traj ->
-                    trajectoryCommandFactory.make(DisplacementTrajectory(traj))
-                }
+                emptyList(),
+                commandList + newCommands
             )
         }
 
@@ -157,15 +246,83 @@ class TrajectoryCommandBuilder private constructor(
      */
     fun stopAndAdd(c: Command): TrajectoryCommandBuilder {
         val b = endTrajectory()
+        return if (b.commandList.last() is TimeDelayCommand) {
+            val lastCommand = (b.commandList.last() as TimeDelayCommand)
+            lastCommand.addCommands(c)
+            TrajectoryCommandBuilder(
+                b,
+                b.tb,
+                b.n,
+                b.lastPoseUnmapped,
+                b.lastPose,
+                b.lastTangent,
+                b.ms,
+                b.commandList.dropLast(1) + (lastCommand as ParallelCommandGroup)
+            )
+        } else {
+            TrajectoryCommandBuilder(
+                b,
+                b.tb,
+                b.n,
+                b.lastPoseUnmapped,
+                b.lastPose,
+                b.lastTangent,
+                b.ms,
+                b.commandList + c
+            )
+        }
+    }
+
+    /**
+     * Waits [t] seconds.
+     */
+    fun waitSeconds(t: Double): TrajectoryCommandBuilder {
+        require(t >= 0.0)
+
+        return stopAndAdd(WaitCommand((t * 1000).toLong()))
+    }
+
+    /**
+     * Schedules command [c] to execute in parallel starting at a displacement [ds] after the last trajectory segment.
+     * The action start is clamped to the span of the current trajectory.
+     *
+     * Cannot be called without an applicable pending trajectory.
+     */
+    @JvmOverloads
+    fun afterDisp(ds: Double, c: Command, interruptor: Boolean = false): TrajectoryCommandBuilder {
+        require(ds >= 0.0)
+
         return TrajectoryCommandBuilder(
-            b,
-            b.tb,
-            b.n,
-            b.lastPoseUnmapped,
-            b.lastPose,
-            b.lastTangent,
-            commandList + c
+            this, tb, n, lastPoseUnmapped, lastPose, lastTangent,
+            ms + listOf(DispMarkerFactory(n, interruptor, ds, c)), commandList
         )
+    }
+
+    /**
+     * Schedules command [c] to execute in parallel starting [dt] seconds after the last trajectory segment, turn, or
+     * other command.
+     */
+    @JvmOverloads
+    fun afterTime(dt: Double, c: Command, interruptor: Boolean = false): TrajectoryCommandBuilder {
+        require(dt >= 0.0)
+
+        return if (n == 0) {
+            TrajectoryCommandBuilder(
+                this,
+                tb,
+                0,
+                lastPoseUnmapped,
+                lastPose,
+                lastTangent,
+                emptyList(),
+                commandList + TimeDelayCommand(dt)
+            )
+        } else {
+            TrajectoryCommandBuilder(
+                this, tb, n, lastPoseUnmapped, lastPose, lastTangent,
+                ms + listOf(TimeMarkerFactory(n, interruptor, dt, c)), commandList
+            )
+        }
     }
 
     fun setTangent(r: Rotation2d) =
@@ -176,6 +333,7 @@ class TrajectoryCommandBuilder private constructor(
             lastPoseUnmapped,
             lastPose,
             lastTangent,
+            ms,
             commandList
         )
 
@@ -189,6 +347,7 @@ class TrajectoryCommandBuilder private constructor(
             lastPoseUnmapped,
             lastPose,
             lastTangent,
+            ms,
             commandList
         )
 
@@ -230,7 +389,7 @@ class TrajectoryCommandBuilder private constructor(
                 dispResolution, angResolution,
                 poseMap
             ),
-            b2.n, lastPoseUnmapped, lastPose, lastTangent, b2.commandList
+            b2.n, lastPoseUnmapped, lastPose, lastTangent, b2.ms, b2.commandList
         )
     }
 
@@ -257,7 +416,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToX(
             posX, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -270,7 +429,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToXConstantHeading(
             posX, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -284,7 +443,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToXLinearHeading(
             posX, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -298,7 +457,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToXLinearHeading(
             posX, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -312,7 +471,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToXSplineHeading(
             posX, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -326,7 +485,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToXSplineHeading(
             posX, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -339,7 +498,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToY(
             posY, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -352,7 +511,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToYConstantHeading(
             posY, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -366,7 +525,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToYLinearHeading(
             posY, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -380,7 +539,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToYLinearHeading(
             posY, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -394,7 +553,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToYSplineHeading(
             posY, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -408,7 +567,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.lineToYSplineHeading(
             posY, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -421,7 +580,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.strafeTo(
             pos, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -434,7 +593,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.strafeToConstantHeading(
             pos, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -448,7 +607,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.strafeToLinearHeading(
             pos, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -462,7 +621,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.strafeToLinearHeading(
             pos, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -476,7 +635,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.strafeToSplineHeading(
             pos, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -490,7 +649,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.strafeToSplineHeading(
             pos, heading, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -504,7 +663,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineTo(
             pos, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -518,7 +677,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineTo(
             pos, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -532,7 +691,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineToConstantHeading(
             pos, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -546,7 +705,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineToConstantHeading(
             pos, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -560,7 +719,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineToLinearHeading(
             pose, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -574,7 +733,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineToLinearHeading(
             pose, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -588,7 +747,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineToSplineHeading(
             pose, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     @JvmOverloads
@@ -602,7 +761,7 @@ class TrajectoryCommandBuilder private constructor(
         tb.splineToSplineHeading(
             pose, tangent, velConstraintOverride, accelConstraintOverride
         ),
-        n + 1, lastPoseUnmapped, lastPose, lastTangent, commandList
+        n + 1, lastPoseUnmapped, lastPose, lastTangent, ms, commandList
     )
 
     /**
@@ -617,7 +776,7 @@ class TrajectoryCommandBuilder private constructor(
     ).setTangent(lastTangent)
 
     fun build(): TrajectoryCommand {
-        val b = endTrajectory()
+        val b = endTrajectory().stopAndAdd(SequentialCommandGroup())
         return TrajectoryCommand(b.commandList, b.lastPose)
     }
 }
