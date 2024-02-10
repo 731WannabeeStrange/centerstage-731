@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.opmodes.auto;
 
 import android.util.Size;
@@ -63,7 +64,6 @@ public class BlueCyclerAuto extends LinearOpMode {
                 .lineToX(-57)
                 .stopAndAdd(new KnockDownStackCommand(0.655, scoringMech))
                 .lineToX(-54)
-                .stopAndAdd(new IntakeSecondCommand(scoringMech))
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 //.splineToConstantHeading(new Vector2d(-32, 12.5), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
@@ -189,3 +189,5 @@ public class BlueCyclerAuto extends LinearOpMode {
         CommandScheduler.getInstance().reset();
     }
 }
+
+ */
