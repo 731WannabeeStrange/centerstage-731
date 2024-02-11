@@ -111,7 +111,7 @@ public class ScoringMech extends SubsystemBase {
                 }
                 break;
             case TRANSIT:
-                if (!areLiftMotorsBusy()) {
+                if (Math.abs(getElevatorHeight() - ELEVATOR_PARAMS.TRANSIT_POS) < ELEVATOR_PARAMS.TRANSIT_ERROR_TOL) {
                     liftServoPair.setPosition(LIFT_SERVO_PARAMS.INTAKE_POS);
                     bucketServo.setPosition((BUCKET_PARAMS.INTAKE_POS + BUCKET_PARAMS.TRANSIT_POS) / 2);
                     scoringMechState = ScoringMechState.WAITING_ON_SERVOS;
@@ -149,6 +149,7 @@ public class ScoringMech extends SubsystemBase {
     }
 
     public void reset() {
+        setWheelState(WheelState.STOPPED);
         if (getElevatorHeight() < ELEVATOR_PARAMS.TRANSIT_POS) {
             setElevatorHeight(ELEVATOR_PARAMS.TRANSIT_POS + 300);
             scoringMechState = ScoringMechState.WAITING_FOR_TRANSIT_POS;
@@ -310,11 +311,12 @@ public class ScoringMech extends SubsystemBase {
         public double kD = 0;
         public double kF = 2e-7;
         public double POSITION_TOLERANCE = 15;
+        public double TRANSIT_ERROR_TOL = 30;
         public double MIN_POS = 25;
         public double MAX_POS = 3000;
         public double SERVO_THRESHOLD = 800;
-        public double SERVO_WAIT_TIME = 0.3;
-        public double TRANSIT_POS = 500;
+        public double SERVO_WAIT_TIME = 0.1;
+        public double TRANSIT_POS = 460;
     }
 
     public static class IntakeParams {

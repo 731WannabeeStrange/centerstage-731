@@ -1,8 +1,8 @@
-/*
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 
@@ -16,7 +16,7 @@ public class IntakePixelsCommand extends CommandBase {
     public IntakePixelsCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
 
-        addRequirements(scoringMechSubsystem);
+        //addRequirements(scoringMechSubsystem);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class IntakePixelsCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return scoringMechSubsystem.getNumPixelsInBucket() == 2;
+        return (scoringMechSubsystem.isFrontColorBlocked() && scoringMechSubsystem.isBackColorBlocked());
     }
 
     @Override
@@ -38,6 +38,3 @@ public class IntakePixelsCommand extends CommandBase {
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
     }
 }
-
-
- */

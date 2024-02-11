@@ -20,7 +20,6 @@ import com.acmerobotics.roadrunner.VelConstraint
 import com.acmerobotics.roadrunner.map
 import com.arcrobotics.ftclib.command.Command
 import com.arcrobotics.ftclib.command.ParallelCommandGroup
-import com.arcrobotics.ftclib.command.ScheduleCommand
 import com.arcrobotics.ftclib.command.SequentialCommandGroup
 import com.arcrobotics.ftclib.command.WaitCommand
 
@@ -191,7 +190,7 @@ class TrajectoryCommandBuilder private constructor(
                     for (m in ms) {
                         val i = m.segmentIndex - offset
                         if (i >= 0) {
-                            actions.add(ScheduleCommand(m.make(timeTraj, traj.offsets[i])))
+                            actions.add(m.make(timeTraj, traj.offsets[i]))
                         } else {
                             msRem.add(m)
                         }
