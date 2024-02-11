@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 @Config
 public class ScorePixelsGroundCommand extends CommandBase {
     public static double BUCKET_RELEASE_TIME = 0.4;
-    public static double INTAKE_RELEASE_TIME = 1;
+    public static double INTAKE_RELEASE_TIME = 0.5;
 
     private final ScoringMech scoringMechSubsystem;
     private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
@@ -19,7 +19,8 @@ public class ScorePixelsGroundCommand extends CommandBase {
         INTAKE,
         IDLE
     }
-    private ScoreGroundState scoreGroundState = ScoreGroundState.BUCKET;
+    // change back to BUCKET to get wheel to spin
+    private ScoreGroundState scoreGroundState = ScoreGroundState.INTAKE;
 
     public ScorePixelsGroundCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;

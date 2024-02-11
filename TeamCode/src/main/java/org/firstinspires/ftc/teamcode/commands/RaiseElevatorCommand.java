@@ -14,7 +14,7 @@ public class RaiseElevatorCommand extends CommandBase {
         this.scoringMechSubsystem = scoringMechSubsystem;
         this.height = height;
 
-        addRequirements(scoringMechSubsystem);
+        //addRequirements(scoringMechSubsystem);
     }
 
     @Override

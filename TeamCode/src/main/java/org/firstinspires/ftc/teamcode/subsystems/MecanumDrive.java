@@ -447,9 +447,9 @@ public class MecanumDrive extends SubsystemBase {
         public double kA = 0.000015;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 45;
-        public double minProfileAccel = -25;
-        public double maxProfileAccel = 45;
+        public double maxWheelVel = 55;
+        public double minProfileAccel = -35;
+        public double maxProfileAccel = 55;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
