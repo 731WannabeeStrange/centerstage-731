@@ -57,8 +57,20 @@ private class DispMarkerFactory(
         )
 }
 
-private class TimeDelayCommand(val dt: Double) :
-    ParallelCommandGroup(WaitCommand((dt * 1000).toLong()))
+private class CommandList(
+    val commands: List<Command> = listOf<Command>(),
+    var cont: (Command) -> Command = { it }
+) {
+    fun withCont(c: (Command) -> Command) = CommandList(commands, c)
+
+    operator fun plus(c: Command) = CommandList(
+        commands + cont(c)
+    ) { it }
+
+    operator fun plus(cs: List<Command>) = CommandList(
+        commands + cont(cs.first()) + cs.drop(1)
+    ) { it }
+}
 
 fun interface TurnCommandFactory {
     fun make(t: TimeTurn): Command
@@ -92,7 +104,7 @@ class TrajectoryCommandBuilder private constructor(
     private val lastPose: Pose2d,
     private val lastTangent: Rotation2d,
     private val ms: List<MarkerFactory>,
-    private val commandList: List<Command>
+    private val commandList: CommandList
 ) {
     @JvmOverloads
     constructor(
@@ -129,7 +141,7 @@ class TrajectoryCommandBuilder private constructor(
                 poseMap.map(beginPose),
                 poseMap.map(beginPose).heading,
                 emptyList(),
-                emptyList()
+                CommandList()
             )
 
     private constructor(
@@ -140,7 +152,7 @@ class TrajectoryCommandBuilder private constructor(
         lastPose: Pose2d,
         lastTangent: Rotation2d,
         ms: List<MarkerFactory>,
-        commandList: List<Command>
+        commandList: CommandList
     ) :
             this(
                 ab.turnCommandFactory,
@@ -246,21 +258,7 @@ class TrajectoryCommandBuilder private constructor(
      */
     fun stopAndAdd(c: Command): TrajectoryCommandBuilder {
         val b = endTrajectory()
-        return if (b.commandList.last() is TimeDelayCommand) {
-            val lastCommand = (b.commandList.last() as TimeDelayCommand)
-            lastCommand.addCommands(c)
-            TrajectoryCommandBuilder(
-                b,
-                b.tb,
-                b.n,
-                b.lastPoseUnmapped,
-                b.lastPose,
-                b.lastTangent,
-                b.ms,
-                b.commandList.dropLast(1) + (lastCommand as ParallelCommandGroup)
-            )
-        } else {
-            TrajectoryCommandBuilder(
+        return TrajectoryCommandBuilder(
                 b,
                 b.tb,
                 b.n,
@@ -270,7 +268,6 @@ class TrajectoryCommandBuilder private constructor(
                 b.ms,
                 b.commandList + c
             )
-        }
     }
 
     /**
@@ -315,7 +312,11 @@ class TrajectoryCommandBuilder private constructor(
                 lastPose,
                 lastTangent,
                 emptyList(),
-                commandList + TimeDelayCommand(dt)
+                if (interruptor) {
+                    commandList.withCont { ParallelDeadlineGroup(SequentialCommandGroup(WaitCommand((dt*1000).toLong()), c), it) }
+                } else {
+                    commandList.withCont { ParallelCommandGroup(SequentialCommandGroup(WaitCommand((dt*1000).toLong()), c), it) }
+                }
             )
         } else {
             TrajectoryCommandBuilder(
@@ -777,6 +778,6 @@ class TrajectoryCommandBuilder private constructor(
 
     fun build(): TrajectoryCommand {
         val b = endTrajectory().stopAndAdd(SequentialCommandGroup())
-        return TrajectoryCommand(b.commandList, b.lastPose)
+        return TrajectoryCommand(b.commandList.commands, b.lastPose)
     }
 }
