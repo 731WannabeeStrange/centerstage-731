@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.UpperTeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 @TeleOp

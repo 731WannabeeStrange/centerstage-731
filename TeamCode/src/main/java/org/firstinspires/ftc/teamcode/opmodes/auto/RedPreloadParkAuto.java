@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.UpperTeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.List;
