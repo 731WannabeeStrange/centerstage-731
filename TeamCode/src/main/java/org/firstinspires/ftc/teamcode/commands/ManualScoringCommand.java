@@ -5,7 +5,6 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
-import org.firstinspires.ftc.teamcode.utils.RangeController;
 import org.firstinspires.ftc.teamcode.utils.Rumbler;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
@@ -128,7 +127,7 @@ public class ManualScoringCommand extends CommandBase {
                 if (downButton.getAsBoolean() && !oldDownButton) {
                     lastScoringPosition -= SCORING_INCREMENT;
                 }
-                lastScoringPosition = RangeController.clamp(lastScoringPosition, MIN_SCORING_POS, ScoringMech.ELEVATOR_PARAMS.MAX_POS);
+                lastScoringPosition = Math.max(MIN_SCORING_POS, Math.min(ScoringMech.ELEVATOR_PARAMS.MAX_POS, lastScoringPosition));
                 scoringMechSubsystem.setElevatorHeight(lastScoringPosition);
 
                 if (cancelButton.getAsBoolean()) {

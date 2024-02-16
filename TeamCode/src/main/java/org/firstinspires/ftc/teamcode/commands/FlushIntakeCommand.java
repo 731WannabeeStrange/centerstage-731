@@ -23,6 +23,7 @@ public class FlushIntakeCommand extends CommandBase {
     public void initialize() {
         scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
         scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+        scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
         elapsedTime.reset();
     }
 

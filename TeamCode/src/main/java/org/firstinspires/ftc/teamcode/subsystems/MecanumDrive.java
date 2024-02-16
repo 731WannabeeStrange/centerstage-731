@@ -289,7 +289,7 @@ public class MecanumDrive extends SubsystemBase {
             Pose2dDual<Time> txWorldTarget = trajectory.get(disp);
             Pose2d error = txWorldTarget.value().minusExp(pose);
 
-            if (disp + 1 >= trajectory.length() && error.position.norm() < 1) {
+            if (disp + 1 >= trajectory.length() && error.position.norm() < 0.75) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -448,7 +448,7 @@ public class MecanumDrive extends SubsystemBase {
 
         // path profile parameters (in inches)
         public double maxWheelVel = 55;
-        public double minProfileAccel = -35;
+        public double minProfileAccel = -30;
         public double maxProfileAccel = 55;
 
         // turn profile parameters (in radians)

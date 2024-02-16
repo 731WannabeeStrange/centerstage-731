@@ -17,9 +17,10 @@ import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
 import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
+import org.firstinspires.ftc.teamcode.utils.Selected;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.Selected;
-import org.firstinspires.ftc.teamcode.utils.vision.UpperTeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.TeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.List;
@@ -70,7 +71,7 @@ public class BluePreloadParkAuto extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(52, 12, -Math.PI/2), 0)
                 .build();
 
-        UpperTeamPropProcessor teamPropProcessor = new UpperTeamPropProcessor();
+        TeamPropProcessor teamPropProcessor = new UpperTeamPropProcessor();
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setStreamFormat(VisionPortal.StreamFormat.YUY2)
