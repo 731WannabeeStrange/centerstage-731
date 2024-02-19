@@ -15,7 +15,7 @@ public class ReleasePixelsCommand extends CommandBase {
         this.releaseTime = releaseTime;
         this.scoringMechSubsystem = scoringMechSubsystem;
 
-        //addRequirements(scoringMechSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override

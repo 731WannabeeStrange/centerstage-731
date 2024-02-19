@@ -22,20 +22,25 @@ import com.arcrobotics.ftclib.command.Command
 import com.arcrobotics.ftclib.command.ParallelCommandGroup
 import com.arcrobotics.ftclib.command.ParallelDeadlineGroup
 import com.arcrobotics.ftclib.command.ParallelRaceGroup
+import com.arcrobotics.ftclib.command.ScheduleCommand
 import com.arcrobotics.ftclib.command.SequentialCommandGroup
 import com.arcrobotics.ftclib.command.WaitCommand
 
-private sealed class MarkerFactory(val segmentIndex: Int, val interruptor: Boolean) {
+enum class ParallelType {
+    NORMAL, INTERRUPT, FORK
+}
+
+private sealed class MarkerFactory(val segmentIndex: Int, val parallelType: ParallelType) {
     abstract fun make(t: TimeTrajectory, segmentDisp: Double): Command
 }
 
 private class TimeMarkerFactory(
     segmentIndex: Int,
-    interruptor: Boolean,
+    parallelType: ParallelType,
     val dt: Double,
     val c: Command
 ) :
-    MarkerFactory(segmentIndex, interruptor) {
+    MarkerFactory(segmentIndex, parallelType) {
     override fun make(t: TimeTrajectory, segmentDisp: Double) =
         SequentialCommandGroup(
             WaitCommand(((t.profile.inverse(segmentDisp) + dt) * 1000).toLong()),
@@ -45,11 +50,11 @@ private class TimeMarkerFactory(
 
 private class DispMarkerFactory(
     segmentIndex: Int,
-    interruptor: Boolean,
+    parallelType: ParallelType,
     val ds: Double,
     val c: Command
 ) :
-    MarkerFactory(segmentIndex, interruptor) {
+    MarkerFactory(segmentIndex, parallelType) {
     override fun make(t: TimeTrajectory, segmentDisp: Double) =
         SequentialCommandGroup(
             WaitCommand(((t.profile.inverse(segmentDisp + ds)) * 1000).toLong()),
@@ -59,17 +64,52 @@ private class DispMarkerFactory(
 
 private class CommandList(
     val commands: List<Command> = listOf<Command>(),
-    var cont: (Command) -> Command = { it }
+    val parallels: List<Command> = listOf<Command>(),
+    val interrupts: List<Command> = listOf<Command>(),
 ) {
-    fun withCont(c: (Command) -> Command) = CommandList(commands, c)
+    fun with(c: Command, parallelType: ParallelType): CommandList {
+        return when (parallelType) {
+            ParallelType.NORMAL -> CommandList(
+                commands,
+                parallels + c,
+                interrupts
+            )
+            ParallelType.INTERRUPT -> CommandList(
+                commands,
+                parallels,
+                interrupts + c
+            )
+            ParallelType.FORK -> CommandList(
+                commands,
+                parallels + ScheduleCommand(c),
+                interrupts
+            )
+        }
+    }
 
     operator fun plus(c: Command) = CommandList(
-        commands + cont(c)
-    ) { it }
+        commands + if (interrupts.isEmpty()) {
+            if (parallels.isEmpty()) c else ParallelCommandGroup(*parallels.toTypedArray(), c)
+        } else {
+            ParallelDeadlineGroup(
+                if (interrupts.size == 1) interrupts.first() else ParallelRaceGroup(*interrupts.toTypedArray()),
+                *parallels.toTypedArray(),
+                c
+            )
+        },
+    )
 
     operator fun plus(cs: List<Command>) = CommandList(
-        commands + cont(cs.first()) + cs.drop(1)
-    ) { it }
+        commands + if (interrupts.isEmpty()) {
+            if (parallels.isEmpty()) cs.first() else ParallelCommandGroup(*parallels.toTypedArray(), cs.first())
+        } else {
+            ParallelDeadlineGroup(
+                if (interrupts.size == 1) interrupts.first() else ParallelRaceGroup(*interrupts.toTypedArray()),
+                *parallels.toTypedArray(),
+                cs.first()
+            )
+        } + cs.drop(1)
+    )
 }
 
 fun interface TurnCommandFactory {
@@ -189,9 +229,9 @@ class TrajectoryCommandBuilder private constructor(
             val endPose = end.value()
             val endTangent = end.velocity().value().linearVel.angleCast()
             val (newCommands, msRem) = ts.zip(ts.scan(0) { acc, t -> acc + t.offsets.size })
-                .foldRight(
+                .foldRightIndexed(
                     Pair(emptyList<Command>(), ms)
-                ) { (traj, offset), (acc, ms) ->
+                ) { index, (traj, offset), (acc, ms) ->
                     val timeTraj = TimeTrajectory(traj)
                     val dispTraj = DisplacementTrajectory(traj)
                     val commands: MutableList<Command> = mutableListOf(
@@ -201,12 +241,12 @@ class TrajectoryCommandBuilder private constructor(
                     val interruptors = mutableListOf<Command>()
                     val msRem = mutableListOf<MarkerFactory>()
                     for (m in ms) {
-                        val i = m.segmentIndex - offset
+                        val i = m.segmentIndex - offset + index
                         if (i >= 0) {
-                            if (m.interruptor) {
-                                interruptors.add(m.make(timeTraj, traj.offsets[i]))
-                            } else {
-                                commands.add(m.make(timeTraj, traj.offsets[i]))
+                            when (m.parallelType) {
+                                ParallelType.NORMAL -> commands.add(m.make(timeTraj, traj.offsets[i]))
+                                ParallelType.INTERRUPT -> interruptors.add(m.make(timeTraj, traj.offsets[i]))
+                                ParallelType.FORK -> commands.add(ScheduleCommand(m.make(timeTraj, traj.offsets[i])))
                             }
                         } else {
                             msRem.add(m)
@@ -286,12 +326,12 @@ class TrajectoryCommandBuilder private constructor(
      * Cannot be called without an applicable pending trajectory.
      */
     @JvmOverloads
-    fun afterDisp(ds: Double, c: Command, interruptor: Boolean = false): TrajectoryCommandBuilder {
+    fun afterDisp(ds: Double, c: Command, parallelType: ParallelType = ParallelType.NORMAL): TrajectoryCommandBuilder {
         require(ds >= 0.0)
 
         return TrajectoryCommandBuilder(
             this, tb, n, lastPoseUnmapped, lastPose, lastTangent,
-            ms + listOf(DispMarkerFactory(n, interruptor, ds, c)), commandList
+            ms + listOf(DispMarkerFactory(n, parallelType, ds, c)), commandList
         )
     }
 
@@ -300,28 +340,18 @@ class TrajectoryCommandBuilder private constructor(
      * other command.
      */
     @JvmOverloads
-    fun afterTime(dt: Double, c: Command, interruptor: Boolean = false): TrajectoryCommandBuilder {
+    fun afterTime(dt: Double, c: Command, parallelType: ParallelType = ParallelType.NORMAL): TrajectoryCommandBuilder {
         require(dt >= 0.0)
 
         return if (n == 0) {
             TrajectoryCommandBuilder(
-                this,
-                tb,
-                0,
-                lastPoseUnmapped,
-                lastPose,
-                lastTangent,
-                emptyList(),
-                if (interruptor) {
-                    commandList.withCont { ParallelDeadlineGroup(SequentialCommandGroup(WaitCommand((dt*1000).toLong()), c), it) }
-                } else {
-                    commandList.withCont { ParallelCommandGroup(SequentialCommandGroup(WaitCommand((dt*1000).toLong()), c), it) }
-                }
+                this, tb, 0, lastPoseUnmapped, lastPose, lastTangent, ms,
+                commandList.with(SequentialCommandGroup(WaitCommand((dt*1000).toLong()), c), parallelType)
             )
         } else {
             TrajectoryCommandBuilder(
                 this, tb, n, lastPoseUnmapped, lastPose, lastTangent,
-                ms + listOf(TimeMarkerFactory(n, interruptor, dt, c)), commandList
+                ms + listOf(TimeMarkerFactory(n, parallelType, dt, c)), commandList
             )
         }
     }

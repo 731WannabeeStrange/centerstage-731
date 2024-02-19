@@ -23,6 +23,7 @@ import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
 import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
+import org.firstinspires.ftc.teamcode.utils.ParallelType;
 import org.firstinspires.ftc.teamcode.utils.PoseStorage;
 import org.firstinspires.ftc.teamcode.utils.TeamPropProcessor;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
@@ -32,6 +33,8 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.List;
 
+
+// rewrite this to use FollowTrajAsPath directly, using SelectCommands and whatever else is needed
 @Autonomous(group = "comp", preselectTeleOp = "BlueTeleOp")
 public class BlueMonsterAuto extends LinearOpMode {
     @Override
@@ -47,47 +50,40 @@ public class BlueMonsterAuto extends LinearOpMode {
         DroneLauncher droneLauncher = new DroneLauncher(hardwareMap);
 
         TurnConstraints slowTurnConstraints = new TurnConstraints(Math.PI / 3, -Math.PI, Math.PI);
+        
         Command rightCommand = drive.pathCommandBuilder(drive.pose)
                 .splineToConstantHeading(new Vector2d(17, 44), -Math.PI / 2)
                 .splineToSplineHeading(new Pose2d(12, 34, 0), -Math.PI)
                 .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
                 .afterDisp(0, new RaiseElevatorCommand(1800, scoringMech))
                 .splineToConstantHeading(new Vector2d(43, 32), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        new ReleasePixelsCommand(0.5, scoringMech)
-                ))
+                .stopAndAdd(new ReleasePixelsCommand(0.5, scoringMech))
                 .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
                 .splineToSplineHeading(new Pose2d(-56, 12.5, Math.toRadians(45)), -Math.PI)
-                .afterTime(0, new IntakePixelsCommand(scoringMech))
+                .afterTime(0, new IntakePixelsCommand(scoringMech), ParallelType.INTERRUPT)
                 .turn(-Math.PI / 2, slowTurnConstraints)
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 .splineToSplineHeading(new Pose2d(-32, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
                 .afterTime(0.1, new RaiseElevatorCommand(2600, scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 42.5), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        new ReleasePixelsCommand(1, scoringMech)
-                ))
+                .stopAndAdd(new ReleasePixelsCommand(1, scoringMech))
                 .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
-                .afterDisp(0, new IntakePixelsCommand(scoringMech))
+                .afterDisp(0, new IntakePixelsCommand(scoringMech), ParallelType.INTERRUPT)
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(-56.5, 15), -Math.PI)
-                .waitSeconds(0.5)
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 .splineToSplineHeading(new Pose2d(-32, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
                 .afterTime(0.1, new RaiseElevatorCommand(2600, scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 42.5), 0)
                 .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
                         new ReleasePixelsCommand(1, scoringMech),
                         new ResetElevatorCommand(scoringMech)
                 ))
@@ -99,42 +95,33 @@ public class BlueMonsterAuto extends LinearOpMode {
                 .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
                 .afterDisp(0, new RaiseElevatorCommand(1800, scoringMech))
                 .splineToConstantHeading(new Vector2d(43, 38.5), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        new ReleasePixelsCommand(0.5, scoringMech)
-                ))
+                .stopAndAdd(new ReleasePixelsCommand(0.5, scoringMech))
                 .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
                 .splineToSplineHeading(new Pose2d(-56, 12.5, Math.toRadians(45)), -Math.PI)
-                .afterTime(0, new IntakePixelsCommand(scoringMech))
+                .afterTime(0, new IntakePixelsCommand(scoringMech), ParallelType.INTERRUPT)
                 .turn(-Math.PI / 2, slowTurnConstraints)
-                .waitSeconds(0.5)
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 .splineToSplineHeading(new Pose2d(-32, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
                 .afterTime(0.1, new RaiseElevatorCommand(2600, scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 32), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        new ReleasePixelsCommand(1, scoringMech)
-                ))
+                .stopAndAdd(new ReleasePixelsCommand(1, scoringMech))
                 .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
-                .afterDisp(0, new IntakePixelsCommand(scoringMech))
+                .afterDisp(0, new IntakePixelsCommand(scoringMech), ParallelType.INTERRUPT)
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(-56.5, 15), -Math.PI)
-                .waitSeconds(0.5)
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 .splineToSplineHeading(new Pose2d(-32, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
                 .afterTime(0.1, new RaiseElevatorCommand(2600, scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 32), 0)
                 .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
                         new ReleasePixelsCommand(1, scoringMech),
                         new ResetElevatorCommand(scoringMech)
                 ))
@@ -146,42 +133,33 @@ public class BlueMonsterAuto extends LinearOpMode {
                 .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
                 .afterDisp(0, new RaiseElevatorCommand(1800, scoringMech))
                 .splineToConstantHeading(new Vector2d(43, 43.5), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        new ReleasePixelsCommand(0.5, scoringMech)
-                ))
+                .stopAndAdd(new ReleasePixelsCommand(0.5, scoringMech))
                 .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
                 .splineToSplineHeading(new Pose2d(-56, 12.5, Math.toRadians(45)), -Math.PI)
-                .afterTime(0, new IntakePixelsCommand(scoringMech))
+                .afterTime(0, new IntakePixelsCommand(scoringMech), ParallelType.INTERRUPT)
                 .turn(-Math.PI / 2, slowTurnConstraints)
-                .waitSeconds(0.1)
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 .splineToSplineHeading(new Pose2d(-32, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
                 .afterTime(0.1, new RaiseElevatorCommand(2600, scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 32), 0)
-                .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        new ReleasePixelsCommand(1, scoringMech)
-                ))
+                .stopAndAdd(new ReleasePixelsCommand(1, scoringMech))
                 .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
-                .afterDisp(0, new IntakePixelsCommand(scoringMech))
+                .afterDisp(0, new IntakePixelsCommand(scoringMech), ParallelType.INTERRUPT)
                 .setTangent(-Math.PI)
                 .splineToConstantHeading(new Vector2d(-56.5, 15), -Math.PI)
-                .waitSeconds(0.5)
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 .splineToSplineHeading(new Pose2d(-32, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
                 .afterTime(0.1, new RaiseElevatorCommand(2600, scoringMech))
                 .splineToConstantHeading(new Vector2d(38, 32), 0)
                 .stopAndAdd(new SequentialCommandGroup(
-                        new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
                         new ReleasePixelsCommand(1, scoringMech),
                         new ResetElevatorCommand(scoringMech)
                 ))

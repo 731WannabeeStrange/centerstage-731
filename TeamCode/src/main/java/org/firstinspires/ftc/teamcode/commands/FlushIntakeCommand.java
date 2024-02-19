@@ -16,7 +16,7 @@ public class FlushIntakeCommand extends CommandBase {
     public FlushIntakeCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
 
-        //addRequirements(scoringMechSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override

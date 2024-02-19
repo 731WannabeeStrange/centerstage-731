@@ -16,7 +16,7 @@ public class IntakePixelsCommand extends CommandBase {
     public IntakePixelsCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
 
-        //addRequirements(scoringMechSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override
