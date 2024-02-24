@@ -27,7 +27,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import java.util.List;
 
 @Autonomous(group = "comp", preselectTeleOp = "BlueTeleOp")
-public class BlueMonsterAuto extends LinearOpMode {
+public class BlueExtraMonsterAuto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -48,7 +48,7 @@ public class BlueMonsterAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(43, 32), 0)
                 .stopAndAdd(new SequentialCommandGroup(
                         new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        scoringMech.releasePixels(0.5)
+                        scoringMech.releasePixels(0.3)
                 ))
                 .afterDisp(0, scoringMech.resetElevator())
                 .setTangent(-Math.PI)
@@ -57,10 +57,9 @@ public class BlueMonsterAuto extends LinearOpMode {
                         (pose2dDual, posePath, v) -> new MinMax(-20, 35))
                 .lineToX(-42)
                 .afterDisp(3, scoringMech.dropIntake())
-                .splineToSplineHeading(new Pose2d(-55.5, 12.5, Math.toRadians(22)), -Math.PI)
-                .afterTime(0, scoringMech.spinIntake())
+                .splineToSplineHeading(new Pose2d(-56, 12.5, Math.toRadians(22)), -Math.PI)
                 .turn(-Math.PI / 3, slowTurnConstraints)
-                .waitSeconds(0.4)
+                .stopAndAdd(scoringMech.spinIntake(1.5))
                 .afterDisp(0, scoringMech.flushIntake())
                 .splineToSplineHeading(new Pose2d(-42, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(28, 12.5), 0)
@@ -103,7 +102,7 @@ public class BlueMonsterAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(43, 37.5), 0)
                 .stopAndAdd(new SequentialCommandGroup(
                         new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        scoringMech.releasePixels(0.5)
+                        scoringMech.releasePixels(0.3)
                 ))
                 .afterDisp(0, scoringMech.resetElevator())
                 .setTangent(-Math.PI)
@@ -112,10 +111,9 @@ public class BlueMonsterAuto extends LinearOpMode {
                         (pose2dDual, posePath, v) -> new MinMax(-20, 35))
                 .lineToX(-42)
                 .afterDisp(3, scoringMech.dropIntake())
-                .splineToSplineHeading(new Pose2d(-55.5, 12.5, Math.toRadians(22)), -Math.PI)
-                .afterTime(0, scoringMech.spinIntake())
+                .splineToSplineHeading(new Pose2d(-56, 12.5, Math.toRadians(22)), -Math.PI)
                 .turn(-Math.PI / 3, slowTurnConstraints)
-                .waitSeconds(0.4)
+                .stopAndAdd(scoringMech.spinIntake(1.5))
                 .afterDisp(0, scoringMech.flushIntake())
                 .splineToSplineHeading(new Pose2d(-42, 12.5, 0), 0)
                 .splineToConstantHeading(new Vector2d(28, 12.5), 0)
@@ -158,7 +156,7 @@ public class BlueMonsterAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(43, 43.5), 0)
                 .stopAndAdd(new SequentialCommandGroup(
                         new WaitUntilCommand(() -> !scoringMech.isElevatorBusy()),
-                        scoringMech.releasePixels(0.5)
+                        scoringMech.releasePixels(0.3)
                 ))
                 .afterDisp(0, scoringMech.resetElevator())
                 .setTangent(-Math.PI)
@@ -167,9 +165,9 @@ public class BlueMonsterAuto extends LinearOpMode {
                         (pose2dDual, posePath, v) -> new MinMax(-20, 35))
                 .lineToX(-42)
                 .afterDisp(3, scoringMech.dropIntake())
-                .splineToSplineHeading(new Pose2d(-55.5, 12.5, Math.toRadians(22)), -Math.PI)
-                .afterTime(0, scoringMech.spinIntake())
+                .splineToSplineHeading(new Pose2d(-56, 12.5, Math.toRadians(22)), -Math.PI)
                 .turn(-Math.PI / 3, slowTurnConstraints)
+                .stopAndAdd(scoringMech.spinIntake(1.5))
                 .waitSeconds(0.4)
                 .afterDisp(0, scoringMech.flushIntake())
                 .splineToSplineHeading(new Pose2d(-42, 12.5, 0), 0)

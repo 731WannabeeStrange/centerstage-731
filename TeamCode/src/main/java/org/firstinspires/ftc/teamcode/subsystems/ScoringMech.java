@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.CommandBase;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
@@ -24,6 +27,7 @@ public class ScoringMech extends SubsystemBase {
     public static IntakeParams INTAKE_PARAMS = new IntakeParams();
     public static LiftServoParams LIFT_SERVO_PARAMS = new LiftServoParams();
     public static BucketParams BUCKET_PARAMS = new BucketParams();
+    public static AutoParams AUTO_PARAMS = new AutoParams();
 
     private final PIDFController rightLiftController = new PIDFController(
             ELEVATOR_PARAMS.kP, ELEVATOR_PARAMS.kI, ELEVATOR_PARAMS.kD, ELEVATOR_PARAMS.kF);
@@ -238,6 +242,217 @@ public class ScoringMech extends SubsystemBase {
         return areLiftMotorsBusy() || scoringMechState != ScoringMechState.ACTIVE;
     }
 
+    public Command resetIntake() {
+        return new InstantCommand(() -> {
+            setIntakePosition(INTAKE_PARAMS.UP_POS);
+            setIntakePower(0);
+            setWheelState(WheelState.STOPPED);
+        });
+    }
+
+    public Command resetElevator() {
+        return new CommandBase() {
+            {
+                //addRequirements(ScoringMech.this);
+            }
+
+            @Override
+            public void initialize() {
+                reset();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return !isElevatorBusy() && getLiftServoState() == LiftServoState.INTAKE;
+            }
+        };
+    }
+
+    public Command raiseElevator(double height) {
+        return new CommandBase() {
+            {
+                //addRequirements(ScoringMech.this);
+            }
+
+            @Override
+            public void initialize() {
+                setElevatorHeight(height);
+            }
+
+            @Override
+            public void execute() {
+                if (canLiftServosExtend()) {
+                    setLiftServoState(LiftServoState.OUTTAKE);
+                }
+            }
+
+            @Override
+            public boolean isFinished() {
+                return !isElevatorBusy();
+            }
+        };
+    }
+
+    public Command releasePixels(double releaseTime) {
+        return new CommandBase() {
+            {
+                //addRequirements(ScoringMech.this);
+            }
+            private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+
+            @Override
+            public void initialize() {
+                setWheelState(WheelState.OUTTAKE);
+                elapsedTime.reset();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return elapsedTime.time() > releaseTime;
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                setWheelState(WheelState.STOPPED);
+            }
+        };
+    }
+
+    public Command scoreGround() {
+        return new CommandBase() {
+            {
+                addRequirements(ScoringMech.this);
+            }
+            private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+
+            @Override
+            public void initialize() {
+                setLiftServoState(LiftServoState.SCORE_GROUND);
+                setIntakePosition(INTAKE_PARAMS.REVERSE_POS);
+                setIntakePower(-INTAKE_PARAMS.OUTTAKE_POWER);
+                elapsedTime.reset();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return elapsedTime.time() > AUTO_PARAMS.SCORE_GROUND_TIME;
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                setIntakePosition(INTAKE_PARAMS.UP_POS);
+                setIntakePower(0);
+                setWheelState(WheelState.STOPPED);
+            }
+        };
+    }
+
+    public Command dropIntake() {
+        return new InstantCommand(() -> setIntakePosition(AUTO_PARAMS.INTAKE_DROP_POS));
+    }
+
+    public Command spinIntake() {
+        return new CommandBase() {
+            {
+                //addRequirements(ScoringMech.this);
+            }
+
+            @Override
+            public void initialize() {
+                setIntakePower(INTAKE_PARAMS.MOTOR_POWER);
+                setWheelState(WheelState.INTAKE);
+            }
+
+            @Override
+            public boolean isFinished() {
+                return isFrontColorBlocked() && isBackColorBlocked();
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                setIntakePosition(INTAKE_PARAMS.UP_POS);
+                setIntakePower(0);
+                setWheelState(WheelState.STOPPED);
+            }
+        };
+    }
+
+    public Command spinIntake(double timeout) {
+        return new CommandBase() {
+            {
+                //addRequirements(ScoringMech.this);
+            }
+            private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+
+            @Override
+            public void initialize() {
+                setIntakePower(INTAKE_PARAMS.MOTOR_POWER);
+                setWheelState(WheelState.INTAKE);
+                elapsedTime.reset();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return (isFrontColorBlocked() && isBackColorBlocked()) || elapsedTime.time() > timeout;
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                setIntakePosition(INTAKE_PARAMS.UP_POS);
+                setIntakePower(0);
+                setWheelState(WheelState.STOPPED);
+            }
+        };
+    }
+
+    public Command flushIntake() {
+        return new CommandBase() {
+            {
+                //addRequirements(ScoringMech.this);
+            }
+            private FlushState flushState = FlushState.ARM_MOVING;
+            private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
+
+            @Override
+            public void initialize() {
+                setIntakePosition(INTAKE_PARAMS.REVERSE_POS);
+                elapsedTime.reset();
+            }
+
+            @Override
+            public void execute() {
+                switch (flushState) {
+                    case ARM_MOVING:
+                        if (elapsedTime.time() > AUTO_PARAMS.FLUSH_ARM_TIME) {
+                            setIntakePower(-INTAKE_PARAMS.OUTTAKE_POWER);
+                            flushState = FlushState.FLUSHING;
+                        }
+                        break;
+                    case FLUSHING:
+                        if (elapsedTime.time() > AUTO_PARAMS.FLUSH_WHEEL_TIME) {
+                            setIntakePower(0);
+                            flushState = FlushState.IDLE;
+                        }
+                        break;
+                    case IDLE:
+                        break;
+                }
+            }
+
+            @Override
+            public boolean isFinished() {
+                return flushState == FlushState.IDLE;
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                setIntakePosition(INTAKE_PARAMS.UP_POS);
+                //setWheelState(WheelState.STOPPED);
+                flushState = FlushState.ARM_MOVING;
+            }
+        };
+    }
+
     public enum WheelState {
         INTAKE,
         OUTTAKE,
@@ -260,6 +475,12 @@ public class ScoringMech extends SubsystemBase {
         TRANSIT,
         WAITING_ON_SERVOS,
         RESETTING
+    }
+
+    private enum FlushState {
+        ARM_MOVING,
+        FLUSHING,
+        IDLE
     }
 
     public static class ElevatorParams {
@@ -302,5 +523,12 @@ public class ScoringMech extends SubsystemBase {
         public double WHEEL_POWER = 1;
         public double BACK_COLOR_THRESHOLD = 0.5;
         public double FRONT_COLOR_THRESHOLD = 1.15;
+    }
+
+    public static class AutoParams {
+        public double SCORE_GROUND_TIME = 0.25;
+        public double FLUSH_ARM_TIME = 0.25;
+        public double FLUSH_WHEEL_TIME = 1;
+        public double INTAKE_DROP_POS = 0.73;
     }
 }

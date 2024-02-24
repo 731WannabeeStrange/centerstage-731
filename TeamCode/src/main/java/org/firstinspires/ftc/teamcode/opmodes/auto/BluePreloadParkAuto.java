@@ -19,8 +19,8 @@ import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.Selected;
-import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.TeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 import org.firstinspires.ftc.teamcode.utils.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 

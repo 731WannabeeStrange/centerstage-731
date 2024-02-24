@@ -289,7 +289,8 @@ public class MecanumDrive extends SubsystemBase {
             Pose2dDual<Time> txWorldTarget = trajectory.get(disp);
             Pose2d error = txWorldTarget.value().minusExp(pose);
 
-            if (disp + 1 >= trajectory.length() && error.position.norm() < 0.75) {
+            if (disp + 1 >= trajectory.length() && error.position.norm() < 0.75 &&
+                    Math.abs(error.heading.toDouble()) < 1) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -447,9 +448,9 @@ public class MecanumDrive extends SubsystemBase {
         public double kA = 0.000015;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 55;
+        public double maxWheelVel = 45;
         public double minProfileAccel = -30;
-        public double maxProfileAccel = 55;
+        public double maxProfileAccel = 50;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
@@ -458,7 +459,7 @@ public class MecanumDrive extends SubsystemBase {
         // path controller gains
         public double axialGain = 4.2;
         public double lateralGain = 4.2;
-        public double headingGain = 4.5; // shared with turn
+        public double headingGain = 4.7; // shared with turn
 
         public double axialVelGain = 0;
         public double lateralVelGain = 0;
