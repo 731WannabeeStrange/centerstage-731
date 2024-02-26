@@ -59,7 +59,7 @@ public class RedTeleOp extends LinearOpMode {
                 ManualDriveCommand.FieldOrientation.RED,
                 telemetryHandler));
         gamepad.getGamepadButton(GamepadKeys.Button.BACK).and(gamepad.getGamepadButton(GamepadKeys.Button.START))
-                .whenActive(droneLauncher.launchDrone(1300));
+                .whenActive(droneLauncher.launchDrone(1275));
 
         waitForStart();
 

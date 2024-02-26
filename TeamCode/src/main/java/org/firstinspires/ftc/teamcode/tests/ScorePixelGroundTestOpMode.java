@@ -19,7 +19,7 @@ public class ScorePixelGroundTestOpMode extends LinearOpMode {
 
         waitForStart();
 
-        scheduler.schedule(new ScorePixelsGroundCommand(scoringMech));
+        scheduler.schedule(scoringMech.scoreGround());
 
         while (!isStopRequested() && opModeIsActive()) {
             scheduler.run();

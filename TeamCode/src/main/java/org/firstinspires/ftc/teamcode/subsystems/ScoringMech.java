@@ -321,7 +321,7 @@ public class ScoringMech extends SubsystemBase {
     public Command scoreGround() {
         return new CommandBase() {
             {
-                addRequirements(ScoringMech.this);
+                //addRequirements(ScoringMech.this);
             }
             private final ElapsedTime elapsedTime = new ElapsedTime(ElapsedTime.Resolution.SECONDS);
 

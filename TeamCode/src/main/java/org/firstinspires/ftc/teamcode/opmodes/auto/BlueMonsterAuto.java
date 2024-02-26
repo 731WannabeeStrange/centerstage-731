@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.PoseStorage;
@@ -38,6 +39,7 @@ public class BlueMonsterAuto extends LinearOpMode {
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(14.5, 63, -Math.PI / 2), telemetryHandler);
         ScoringMech scoringMech = new ScoringMech(hardwareMap, telemetryHandler);
+        //DroneLauncher drone = new DroneLauncher(hardwareMap, telemetryHandler);
 
         TurnConstraints slowTurnConstraints = new TurnConstraints(Math.PI / 5, -Math.PI, Math.PI);
         Command rightCommand = drive.pathCommandBuilder(drive.pose)

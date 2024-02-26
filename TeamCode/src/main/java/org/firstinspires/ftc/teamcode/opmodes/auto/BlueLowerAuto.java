@@ -1,4 +1,3 @@
-/*
 package org.firstinspires.ftc.teamcode.opmodes.auto;
 
 import android.util.Size;
@@ -15,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.commands.ResetElevatorCommand;
 import org.firstinspires.ftc.teamcode.commands.ScorePixelsCommand;
 import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
+import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.LowerTeamPropProcessor;
@@ -38,6 +38,7 @@ public class BlueLowerAuto extends LinearOpMode {
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(-37.5, 63, -Math.PI / 2), telemetryHandler);
         ScoringMech scoringMech = new ScoringMech(hardwareMap, telemetryHandler);
+        DroneLauncher drone = new DroneLauncher(hardwareMap, telemetryHandler);
 
         Command rightCommand = drive.pathCommandBuilder(drive.pose)
                 .splineToConstantHeading(new Vector2d(-40, 46), -Math.PI / 2)
@@ -137,5 +138,3 @@ public class BlueLowerAuto extends LinearOpMode {
         CommandScheduler.getInstance().reset();
     }
 }
-
- */
