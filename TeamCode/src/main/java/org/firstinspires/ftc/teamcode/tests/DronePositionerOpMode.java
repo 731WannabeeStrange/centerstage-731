@@ -12,7 +12,7 @@ public class DronePositionerOpMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Servo drone = hardwareMap.get(Servo.class, "drone");
+        Servo drone = hardwareMap.get(Servo.class, "droneServo");
 
         waitForStart();
 

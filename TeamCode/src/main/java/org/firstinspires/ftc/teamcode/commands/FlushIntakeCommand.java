@@ -16,13 +16,14 @@ public class FlushIntakeCommand extends CommandBase {
     public FlushIntakeCommand(ScoringMech scoringMechSubsystem) {
         this.scoringMechSubsystem = scoringMechSubsystem;
 
-        //addRequirements(scoringMechSubsystem);
+        addRequirements(scoringMechSubsystem);
     }
 
     @Override
     public void initialize() {
         scoringMechSubsystem.setIntakePower(-ScoringMech.INTAKE_PARAMS.MOTOR_POWER);
         scoringMechSubsystem.setIntakePosition(ScoringMech.INTAKE_PARAMS.REVERSE_POS);
+        scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
         elapsedTime.reset();
     }
 

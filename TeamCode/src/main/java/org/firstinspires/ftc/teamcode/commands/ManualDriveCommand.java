@@ -101,6 +101,8 @@ public class ManualDriveCommand extends CommandBase {
         }
 
         drive.setDrivePowers(powers);
+
+        telemetryHandler.addData("turn state", turnState);
     }
 
     private enum TurnState {

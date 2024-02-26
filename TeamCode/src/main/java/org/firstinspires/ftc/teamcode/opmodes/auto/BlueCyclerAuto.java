@@ -23,9 +23,10 @@ import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.PoseStorage;
+import org.firstinspires.ftc.teamcode.utils.Selected;
+import org.firstinspires.ftc.teamcode.utils.TeamPropProcessor;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.Selected;
-import org.firstinspires.ftc.teamcode.utils.vision.UpperTeamPropProcessor;
+import org.firstinspires.ftc.teamcode.utils.UpperTeamPropProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class BlueCyclerAuto extends LinearOpMode {
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(14.5, 63, -Math.PI / 2), telemetryHandler);
         ScoringMech scoringMech = new ScoringMech(hardwareMap, telemetryHandler);
-        DroneLauncher droneLauncher = new DroneLauncher(hardwareMap);
+        DroneLauncher drone = new DroneLauncher(hardwareMap, telemetryHandler);
 
         Command rightCommand = drive.pathCommandBuilder(drive.pose)
                 .splineToConstantHeading(new Vector2d(19, 44), -Math.PI / 2)
@@ -63,7 +64,6 @@ public class BlueCyclerAuto extends LinearOpMode {
                 .lineToX(-57)
                 .stopAndAdd(new KnockDownStackCommand(0.655, scoringMech))
                 .lineToX(-54)
-                .stopAndAdd(new IntakeSecondCommand(scoringMech))
                 .afterDisp(0, new FlushIntakeCommand(scoringMech))
                 //.splineToConstantHeading(new Vector2d(-32, 12.5), 0)
                 .splineToConstantHeading(new Vector2d(30, 12.5), 0)
@@ -85,7 +85,7 @@ public class BlueCyclerAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(43, 38.5), 0)
                 .stopAndAdd(new ScorePixelsCommand(1800, scoringMech))
                 .setTangent(-Math.PI)
-                .afterDisp(3, new ResetElevatorCommand(scoringMech))
+                .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .splineToConstantHeading(new Vector2d(30, 12.5), -Math.PI)
                 .setTangent(-Math.PI)
                 //.splineToConstantHeading(new Vector2d(-32, 12.5), -Math.PI)
@@ -107,7 +107,7 @@ public class BlueCyclerAuto extends LinearOpMode {
                         new ScorePixelsCommand(2600, scoringMech)
                 ))
                 .setTangent(-Math.PI)
-                .afterDisp(3, new ResetElevatorCommand(scoringMech))
+                .afterDisp(0, new ResetElevatorCommand(scoringMech))
                 .splineToConstantHeading(new Vector2d(36, 24), -Math.PI / 2)
                 .splineToSplineHeading(new Pose2d(44, 12, -Math.PI/2), 0)
                 .build();
@@ -146,7 +146,7 @@ public class BlueCyclerAuto extends LinearOpMode {
                 .splineToSplineHeading(new Pose2d(44, 12, -Math.PI/2), 0)
                 .build();
 
-        UpperTeamPropProcessor teamPropProcessor = new UpperTeamPropProcessor();
+        TeamPropProcessor teamPropProcessor = new UpperTeamPropProcessor();
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)

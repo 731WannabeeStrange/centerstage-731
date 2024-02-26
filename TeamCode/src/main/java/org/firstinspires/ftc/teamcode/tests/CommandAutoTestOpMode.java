@@ -33,9 +33,9 @@ public class CommandAutoTestOpMode extends LinearOpMode {
                         .stopAndAdd(new ScorePixelsGroundCommand(scoringMech))
                         .waitSeconds(1)
                         .stopAndAdd(new SequentialCommandGroup(
-                                new ScorePixelsCommand(2800, scoringMech),
-                                new ResetElevatorCommand(scoringMech)
+                                new ScorePixelsCommand(2800, scoringMech)
                         ))
+                        .afterTime(0.75, new ResetElevatorCommand(scoringMech))
                         .turnTo(0)
                         .build()
         );

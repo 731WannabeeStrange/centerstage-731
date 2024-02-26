@@ -17,10 +17,11 @@ import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
 import org.firstinspires.ftc.teamcode.subsystems.DroneLauncher;
 import org.firstinspires.ftc.teamcode.subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
+import org.firstinspires.ftc.teamcode.utils.LowerTeamPropProcessor;
 import org.firstinspires.ftc.teamcode.utils.PoseStorage;
+import org.firstinspires.ftc.teamcode.utils.Selected;
+import org.firstinspires.ftc.teamcode.utils.TeamPropProcessor;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
-import org.firstinspires.ftc.teamcode.utils.vision.LowerTeamPropProcessor;
-import org.firstinspires.ftc.teamcode.utils.vision.Selected;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class BlueLowerAuto extends LinearOpMode {
         TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(-37.5, 63, -Math.PI / 2), telemetryHandler);
         ScoringMech scoringMech = new ScoringMech(hardwareMap, telemetryHandler);
-        DroneLauncher droneLauncher = new DroneLauncher(hardwareMap);
+        DroneLauncher drone = new DroneLauncher(hardwareMap, telemetryHandler);
 
         Command rightCommand = drive.pathCommandBuilder(drive.pose)
                 .splineToConstantHeading(new Vector2d(-40, 46), -Math.PI / 2)
@@ -94,7 +95,7 @@ public class BlueLowerAuto extends LinearOpMode {
                 .splineToSplineHeading(new Pose2d(48, 60, -Math.PI / 2), 0)
                 .build();
 
-        LowerTeamPropProcessor teamPropProcessor = new LowerTeamPropProcessor();
+        TeamPropProcessor teamPropProcessor = new LowerTeamPropProcessor();
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)

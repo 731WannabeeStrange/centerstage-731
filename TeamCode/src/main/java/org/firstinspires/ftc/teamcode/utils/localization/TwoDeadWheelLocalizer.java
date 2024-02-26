@@ -39,10 +39,10 @@ public final class TwoDeadWheelLocalizer implements IncrementalLocalizer {
     private double lastRawHeadingVel, headingVelOffset;
 
     public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, double inPerTick) {
-        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightOdo")));
+        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "leftBack")));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightBack")));
 
-        //par.setDirection(DcMotorSimple.Direction.REVERSE);
+        par.setDirection(DcMotorSimple.Direction.REVERSE);
         perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         this.imu = imu;

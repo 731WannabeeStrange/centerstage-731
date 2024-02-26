@@ -4,12 +4,12 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.commands.ScorePixelsGroundCommand;
+import org.firstinspires.ftc.teamcode.commands.IntakePixelsCommand;
 import org.firstinspires.ftc.teamcode.subsystems.ScoringMech;
 import org.firstinspires.ftc.teamcode.utils.TelemetryHandler;
 
 @Autonomous(group = "test")
-public class ScorePixelGroundTestOpMode extends LinearOpMode {
+public class IntakePixelTestOpMode extends LinearOpMode {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
     private final TelemetryHandler telemetryHandler = new TelemetryHandler(telemetry);
 
@@ -19,7 +19,7 @@ public class ScorePixelGroundTestOpMode extends LinearOpMode {
 
         waitForStart();
 
-        scheduler.schedule(scoringMech.scoreGround());
+        scheduler.schedule(new IntakePixelsCommand(scoringMech));
 
         while (!isStopRequested() && opModeIsActive()) {
             scheduler.run();

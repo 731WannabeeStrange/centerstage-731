@@ -36,7 +36,7 @@ public class RedTeleOp extends LinearOpMode {
 
         MecanumDrive driveSubsystem = new MecanumDrive(hardwareMap, PoseStorage.currentPose != null ? PoseStorage.currentPose : startPose, telemetryHandler);
         ScoringMech scoringMechSubsystem = new ScoringMech(hardwareMap, telemetryHandler);
-        DroneLauncher droneLauncher = new DroneLauncher(hardwareMap);
+        DroneLauncher droneLauncher = new DroneLauncher(hardwareMap, telemetryHandler);
         GamepadEx gamepad = new GamepadEx(gamepad1);
         Rumbler rumbler = new Rumbler(gamepad1);
 
@@ -59,7 +59,7 @@ public class RedTeleOp extends LinearOpMode {
                 ManualDriveCommand.FieldOrientation.RED,
                 telemetryHandler));
         gamepad.getGamepadButton(GamepadKeys.Button.BACK).and(gamepad.getGamepadButton(GamepadKeys.Button.START))
-                .whenActive(droneLauncher::launchDrone);
+                .whenActive(droneLauncher.launchDrone(1275));
 
         waitForStart();
 

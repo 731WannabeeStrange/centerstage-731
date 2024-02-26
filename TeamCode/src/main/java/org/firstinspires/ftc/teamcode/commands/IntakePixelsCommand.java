@@ -1,4 +1,3 @@
-/*
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -28,7 +27,7 @@ public class IntakePixelsCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return scoringMechSubsystem.getNumPixelsInBucket() == 2;
+        return (scoringMechSubsystem.isFrontColorBlocked() && scoringMechSubsystem.isBackColorBlocked());
     }
 
     @Override
@@ -38,6 +37,3 @@ public class IntakePixelsCommand extends CommandBase {
         scoringMechSubsystem.setWheelState(ScoringMech.WheelState.STOPPED);
     }
 }
-
-
- */
